@@ -1,0 +1,140 @@
+/* ───────────────────────────────
+   HYDROSTORM APP THEME
+   ─────────────────────────────── */
+
+/* Branding-Bar oben */
+.custom-navbar {
+  background: linear-gradient(90deg, #ffffff 0%, #f8f9fa 100%);
+  border-bottom: 2px solid #e3e3e3;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);  /* tieferer Schatten */
+  padding: 0.8rem 1.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  position: sticky;
+  top: 0;
+  z-index: 1100;
+  min-height: 70px; /* mehr Raum fürs größere Logo */
+}
+
+.navbar {
+  background: linear-gradient(90deg, #ffffff 0%, #f8f9fa 100%) !important;
+  border-top: none;
+  border-bottom: 2px solid #e3e3e3;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.navbar:hover {
+  background: linear-gradient(90deg, #ffffff 0%, #eef6f8 100%) !important;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+}
+
+/* Tabs-Textfarbe anpassen */
+.navbar-nav > li > a,
+.navbar-nav > .active > a {
+  color: #004E7C !important;
+  font-weight: 500;
+}
+
+.navbar-nav > li > a:hover {
+  color: #2BB3C0 !important;
+}
+
+/* Logo */
+.branding-logo {
+  height: 86px;                  
+  width: auto;
+  margin-right: 15px;
+  flex-shrink: 0;                
+  display: block;
+  /*filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));*/
+}
+
+.custom-navbar:hover {
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+  transition: box-shadow 0.3s ease;
+}
+
+.branding-logo:hover {
+  transform: scale(1.03);
+  transition: transform 0.3s ease;
+}
+
+/* Title Block */
+.branding-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.1;
+}
+
+/* Title & Subtitle */
+.branding-title {
+  font-weight: 700;
+  color: #004E7C;
+  font-size: 1.3rem;
+}
+
+.branding-subtitle {
+  font-size: 0.9rem;
+  color: #2BB3C0;
+  margin-top: 2px;
+}
+
+/* Tabs / Panels */
+.tab-content {
+  margin-top: 1rem;
+}
+
+/* Panel Layout */
+.container-fluid {
+  padding: 1.5rem;
+}
+
+/* Buttons */
+.btn-primary {
+  background-color: #004E7C !important;   /* kräftiges Wasserblau */
+  border-color: #004E7C !important;
+  color: #ffffff !important;
+  font-weight: 500;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: #006DA4 !important;   /* etwas helleres Blau beim Hover */
+  border-color: #006DA4 !important;
+  box-shadow: 0 0 6px rgba(0, 109, 164, 0.5);
+}
+
+.btn-primary:active {
+  background-color: #003F5C !important;   /* dunkler beim Klick */
+  border-color: #003F5C !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.btn-secondary {
+  background-color: #E3EEF5 !important;
+  border-color: #C7D9E6 !important;
+  color: #004E7C !important;
+}
+
+.btn-secondary:hover {
+  background-color: #D3E4F0 !important;
+  border-color: #BBD4E6 !important;
+}
+
+/* Fix: Abstand zwischen Branding-Bar und Tabs */
+.navbar {
+  margin-top: 0 !important;
+}
+
+.navbar-nav {
+  margin-top: -8px !important;
+}
+
+body {
+  background-color: #f8f9fa;
+  color: #243447;
+}

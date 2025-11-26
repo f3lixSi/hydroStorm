@@ -1,0 +1,31 @@
+# --- R / RStudio ---
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+
+# macOS
+.DS_Store
+
+# Shiny / Temp
+.Rcheck/
+.Rapp.history
+
+# renv (falls doch wieder angelegt, aber wir wollen es NICHT nutzen)
+renv/
+renv.lock
+
+# Große Rohdaten / Geodaten (nicht ins Repo)
+*.nc
+*.tif
+*.tiff
+*.zip
+*.shp
+*.dbf
+*.shx
+*.prj
+
+# Lokale Testdatenordner (falls du sie so nutzt)
+radklim/
+data_raw/
+tmp/
