@@ -1400,6 +1400,35 @@
         "Archs": "later.so.dSYM"
       }
     },
+    "lattice": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "lattice",
+        "Version": "0.22-7",
+        "Date": "2025-03-31",
+        "Priority": "recommended",
+        "Title": "Trellis Graphics for R",
+        "Authors@R": "c(person(\"Deepayan\", \"Sarkar\", role = c(\"aut\", \"cre\"),\n\t            email = \"deepayan.sarkar@r-project.org\",\n\t\t    comment = c(ORCID = \"0000-0003-4107-1553\")),\n              person(\"Felix\", \"Andrews\", role = \"ctb\"),\n\t      person(\"Kevin\", \"Wright\", role = \"ctb\", comment = \"documentation\"),\n\t      person(\"Neil\", \"Klepeis\", role = \"ctb\"),\n\t      person(\"Johan\", \"Larsson\", role = \"ctb\", comment = \"miscellaneous improvements\"),\n              person(\"Zhijian (Jason)\", \"Wen\", role = \"cph\", comment = \"filled contour code\"),\n              person(\"Paul\", \"Murrell\", role = \"ctb\", email = \"paul@stat.auckland.ac.nz\"),\n\t      person(\"Stefan\", \"Eng\", role = \"ctb\", comment = \"violin plot improvements\"),\n\t      person(\"Achim\", \"Zeileis\", role = \"ctb\", comment = \"modern colors\"),\n              person(\"Alexandre\", \"Courtiol\", role = \"ctb\", comment = \"generics for larrows, lpolygon, lrect and lsegments\")\n\t      )",
+        "Description": "A powerful and elegant high-level data visualization\n  system inspired by Trellis graphics, with an emphasis on\n  multivariate data. Lattice is sufficient for typical graphics needs,\n  and is also flexible enough to handle most nonstandard requirements.\n  See ?Lattice for an introduction.",
+        "Depends": "R (>= 4.0.0)",
+        "Suggests": "KernSmooth, MASS, latticeExtra, colorspace",
+        "Imports": "grid, grDevices, graphics, stats, utils",
+        "Enhances": "chron, zoo",
+        "LazyLoad": "yes",
+        "LazyData": "yes",
+        "License": "GPL (>= 2)",
+        "URL": "https://lattice.r-forge.r-project.org/",
+        "BugReports": "https://github.com/deepayan/lattice/issues",
+        "NeedsCompilation": "yes",
+        "Packaged": "2025-04-02 04:55:57 UTC; deepayan",
+        "Author": "Deepayan Sarkar [aut, cre] (<https://orcid.org/0000-0003-4107-1553>),\n  Felix Andrews [ctb],\n  Kevin Wright [ctb] (documentation),\n  Neil Klepeis [ctb],\n  Johan Larsson [ctb] (miscellaneous improvements),\n  Zhijian (Jason) Wen [cph] (filled contour code),\n  Paul Murrell [ctb],\n  Stefan Eng [ctb] (violin plot improvements),\n  Achim Zeileis [ctb] (modern colors),\n  Alexandre Courtiol [ctb] (generics for larrows, lpolygon, lrect and\n    lsegments)",
+        "Maintainer": "Deepayan Sarkar <deepayan.sarkar@r-project.org>",
+        "Repository": "CRAN",
+        "Date/Publication": "2025-04-02 15:40:02 UTC",
+        "Built": "R 4.5.2; aarch64-apple-darwin20; 2025-11-01 02:09:42 UTC; unix"
+      }
+    },
     "lazyeval": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -1423,6 +1452,67 @@
         "Date/Publication": "2019-03-15 17:50:07 UTC",
         "Built": "R 4.5.0; aarch64-apple-darwin20; 2025-03-31 21:52:09 UTC; unix",
         "Archs": "lazyeval.so.dSYM"
+      }
+    },
+    "leaflet": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Type": "Package",
+        "Package": "leaflet",
+        "Title": "Create Interactive Web Maps with the JavaScript 'Leaflet'\nLibrary",
+        "Version": "2.2.3",
+        "Authors@R": "c(\n    person(\"Joe\", \"Cheng\", , \"joe@posit.co\", role = \"aut\"),\n    person(\"Barret\", \"Schloerke\", , \"barret@posit.co\", role = \"aut\",\n           comment = c(ORCID = \"0000-0001-9986-114X\")),\n    person(\"Bhaskar\", \"Karambelkar\", role = \"aut\"),\n    person(\"Yihui\", \"Xie\", role = \"aut\"),\n    person(\"Garrick\", \"Aden-Buie\", , \"garrick@posit.co\", role = c(\"aut\", \"cre\"),\n           comment = c(ORCID = \"0000-0002-7111-0077\")),\n    person(\"Hadley\", \"Wickham\", role = \"ctb\"),\n    person(\"Kenton\", \"Russell\", role = \"ctb\"),\n    person(\"Kent\", \"Johnson\", role = \"ctb\"),\n    person(\"Vladimir\", \"Agafonkin\", role = c(\"ctb\", \"cph\"),\n           comment = \"Leaflet library\"),\n    person(\"CloudMade\", role = \"cph\",\n           comment = \"Leaflet library\"),\n    person(\"Leaflet contributors\", role = \"ctb\",\n           comment = \"Leaflet library\"),\n    person(\"Brandon Copeland\", role = c(\"ctb\", \"cph\"),\n           comment = \"leaflet-measure plugin\"),\n    person(\"Joerg Dietrich\", role = c(\"ctb\", \"cph\"),\n           comment = \"Leaflet.Terminator plugin\"),\n    person(\"Benjamin Becquet\", role = c(\"ctb\", \"cph\"),\n           comment = \"Leaflet.MagnifyingGlass plugin\"),\n    person(\"Norkart AS\", role = c(\"ctb\", \"cph\"),\n           comment = \"Leaflet.MiniMap plugin\"),\n    person(\"L. Voogdt\", role = c(\"ctb\", \"cph\"),\n           comment = \"Leaflet.awesome-markers plugin\"),\n    person(\"Daniel Montague\", role = c(\"ctb\", \"cph\"),\n           comment = \"Leaflet.EasyButton plugin\"),\n    person(\"Kartena AB\", role = c(\"ctb\", \"cph\"),\n           comment = \"Proj4Leaflet plugin\"),\n    person(\"Robert Kajic\", role = c(\"ctb\", \"cph\"),\n           comment = \"leaflet-locationfilter plugin\"),\n    person(\"Mapbox\", role = c(\"ctb\", \"cph\"),\n           comment = \"leaflet-omnivore plugin\"),\n    person(\"Michael Bostock\", role = c(\"ctb\", \"cph\"),\n           comment = \"topojson\"),\n    person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"))\n  )",
+        "Description": "Create and customize interactive maps using the 'Leaflet'\n    JavaScript library and the 'htmlwidgets' package. These maps can be\n    used directly from the R console, from 'RStudio', in Shiny\n    applications and R Markdown documents.",
+        "License": "MIT + file LICENSE",
+        "URL": "https://rstudio.github.io/leaflet/,\nhttps://github.com/rstudio/leaflet",
+        "BugReports": "https://github.com/rstudio/leaflet/issues",
+        "Depends": "R (>= 3.5)",
+        "Imports": "crosstalk, htmltools, htmlwidgets (>= 1.5.4), jquerylib,\nleaflet.providers (>= 2.0.0), magrittr, methods, png, raster\n(>= 3.6.3), RColorBrewer, rlang, scales (>= 1.0.0), sf (>=\n0.9-6), stats, viridisLite, xfun",
+        "Suggests": "knitr, maps, purrr, R6, RJSONIO, rmarkdown, s2, shiny (>=\n1.0.0), sp, terra, testthat (>= 3.0.0)",
+        "Config/Needs/website": "dplyr, ncdf4, rnaturalearth,\ntidyverse/tidytemplate",
+        "Config/testthat/edition": "3",
+        "Encoding": "UTF-8",
+        "LazyData": "true",
+        "RoxygenNote": "7.3.2",
+        "NeedsCompilation": "no",
+        "Packaged": "2025-09-02 15:28:47 UTC; garrick",
+        "Author": "Joe Cheng [aut],\n  Barret Schloerke [aut] (ORCID: <https://orcid.org/0000-0001-9986-114X>),\n  Bhaskar Karambelkar [aut],\n  Yihui Xie [aut],\n  Garrick Aden-Buie [aut, cre] (ORCID:\n    <https://orcid.org/0000-0002-7111-0077>),\n  Hadley Wickham [ctb],\n  Kenton Russell [ctb],\n  Kent Johnson [ctb],\n  Vladimir Agafonkin [ctb, cph] (Leaflet library),\n  CloudMade [cph] (Leaflet library),\n  Leaflet contributors [ctb] (Leaflet library),\n  Brandon Copeland [ctb, cph] (leaflet-measure plugin),\n  Joerg Dietrich [ctb, cph] (Leaflet.Terminator plugin),\n  Benjamin Becquet [ctb, cph] (Leaflet.MagnifyingGlass plugin),\n  Norkart AS [ctb, cph] (Leaflet.MiniMap plugin),\n  L. Voogdt [ctb, cph] (Leaflet.awesome-markers plugin),\n  Daniel Montague [ctb, cph] (Leaflet.EasyButton plugin),\n  Kartena AB [ctb, cph] (Proj4Leaflet plugin),\n  Robert Kajic [ctb, cph] (leaflet-locationfilter plugin),\n  Mapbox [ctb, cph] (leaflet-omnivore plugin),\n  Michael Bostock [ctb, cph] (topojson),\n  Posit Software, PBC [cph, fnd]",
+        "Maintainer": "Garrick Aden-Buie <garrick@posit.co>",
+        "Repository": "CRAN",
+        "Date/Publication": "2025-09-04 07:40:02 UTC",
+        "Built": "R 4.5.0; ; 2025-09-05 05:45:06 UTC; unix"
+      }
+    },
+    "leaflet.providers": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Type": "Package",
+        "Package": "leaflet.providers",
+        "Title": "Leaflet Providers",
+        "Version": "2.0.0",
+        "Authors@R": "c(\n    person(\"Leslie\", \"Huang\", , \"lesliehuang@nyu.edu\", role = \"aut\"),\n    person(\"Barret\", \"Schloerke\", , \"barret@posit.co\", role = c(\"ctb\", \"cre\"),\n           comment = c(ORCID = \"0000-0001-9986-114X\")),\n    person(\"Leaflet Providers contributors\", role = c(\"ctb\", \"cph\"),\n           comment = \"Leaflet Providers plugin\"),\n    person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"))\n  )",
+        "Description": "Contains third-party map tile provider information from\n    'Leaflet.js', <https://github.com/leaflet-extras/leaflet-providers>,\n    to be used with the 'leaflet' R package. Additionally,\n    'leaflet.providers' enables users to retrieve up-to-date provider\n    information between package updates.",
+        "License": "BSD_2_clause + file LICENSE",
+        "URL": "https://rstudio.github.io/leaflet.providers/,\nhttps://github.com/rstudio/leaflet.providers",
+        "BugReports": "https://github.com/rstudio/leaflet.providers/issues",
+        "Depends": "R (>= 2.10)",
+        "Imports": "htmltools",
+        "Suggests": "jsonlite, testthat (>= 3.0.0), V8",
+        "Config/Needs/website": "tidyverse/tidytemplate",
+        "Config/testthat/edition": "3",
+        "Encoding": "UTF-8",
+        "Language": "en-US",
+        "RoxygenNote": "7.2.3",
+        "Collate": "'providers_data.R' 'get_current_providers.R'\n'leaflet.providers-package.R' 'zzz.R'",
+        "NeedsCompilation": "no",
+        "Packaged": "2023-10-17 12:24:21 UTC; garrick",
+        "Author": "Leslie Huang [aut],\n  Barret Schloerke [ctb, cre] (<https://orcid.org/0000-0001-9986-114X>),\n  Leaflet Providers contributors [ctb, cph] (Leaflet Providers plugin),\n  Posit Software, PBC [cph, fnd]",
+        "Maintainer": "Barret Schloerke <barret@posit.co>",
+        "Repository": "CRAN",
+        "Date/Publication": "2023-10-17 17:10:02 UTC",
+        "Built": "R 4.5.0; ; 2025-04-01 06:35:30 UTC; unix"
       }
     },
     "lifecycle": {
@@ -1649,6 +1739,28 @@
         "Built": "R 4.5.0; ; 2025-03-31 21:41:54 UTC; unix"
       }
     },
+    "png": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "png",
+        "Version": "0.1-8",
+        "Title": "Read and write PNG images",
+        "Author": "Simon Urbanek <Simon.Urbanek@r-project.org>",
+        "Maintainer": "Simon Urbanek <Simon.Urbanek@r-project.org>",
+        "Depends": "R (>= 2.9.0)",
+        "Description": "This package provides an easy and simple way to read, write and display bitmap images stored in the PNG format. It can read and write both files and in-memory raw vectors.",
+        "License": "GPL-2 | GPL-3",
+        "SystemRequirements": "libpng",
+        "URL": "http://www.rforge.net/png/",
+        "NeedsCompilation": "yes",
+        "Packaged": "2022-11-29 09:42:31 UTC; rforge",
+        "Repository": "CRAN",
+        "Date/Publication": "2022-11-29 11:12:53 UTC",
+        "Built": "R 4.5.0; aarch64-apple-darwin20; 2025-03-31 21:51:18 UTC; unix",
+        "Archs": "png.so.dSYM"
+      }
+    },
     "prettyunits": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -1825,6 +1937,34 @@
         "Date/Publication": "2021-01-31 05:40:02 UTC",
         "Built": "R 4.5.0; aarch64-apple-darwin20; 2025-03-31 21:43:44 UTC; unix",
         "Archs": "rappdirs.so.dSYM"
+      }
+    },
+    "raster": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "raster",
+        "Type": "Package",
+        "Title": "Geographic Data Analysis and Modeling",
+        "Version": "3.6-32",
+        "Date": "2025-03-27",
+        "Imports": "Rcpp, methods, terra (>= 1.8-5)",
+        "LinkingTo": "Rcpp",
+        "Depends": "sp (>= 1.4-5), R (>= 3.5.0)",
+        "Suggests": "ncdf4, igraph, tcltk, parallel, rasterVis, MASS, sf,\ntinytest, gstat, fields, exactextractr",
+        "Description": "Reading, writing, manipulating, analyzing and modeling of spatial data. This package has been superseded by the \"terra\" package <https://CRAN.R-project.org/package=terra>. ",
+        "License": "GPL (>= 3)",
+        "URL": "https://rspatial.org/raster",
+        "BugReports": "https://github.com/rspatial/raster/issues/",
+        "Authors@R": "c(\n\tperson(\"Robert J.\", \"Hijmans\", role = c(\"cre\", \"aut\"),  \n\t\t\temail = \"r.hijmans@gmail.com\", \n\t\t\tcomment = c(ORCID = \"0000-0001-5872-2872\")),\n\tperson(\"Jacob\", \"van Etten\", role = \"ctb\"),\n\tperson(\"Michael\", \"Sumner\", role = \"ctb\"),\n\tperson(\"Joe\", \"Cheng\", role = \"ctb\"),\n\tperson(\"Dan\", \"Baston\", role = \"ctb\"),\n\tperson(\"Andrew\", \"Bevan\", role = \"ctb\"),\n\tperson(\"Roger\", \"Bivand\", role = \"ctb\"),\n\tperson(\"Lorenzo\", \"Busetto\", role = \"ctb\"),\n\tperson(\"Mort\", \"Canty\", role = \"ctb\"),\n\tperson(\"Ben\", \"Fasoli\", role = \"ctb\"),\n\tperson(\"David\", \"Forrest\", role = \"ctb\"),\n\tperson(\"Aniruddha\", \"Ghosh\", role = \"ctb\"),\n\tperson(\"Duncan\", \"Golicher\", role = \"ctb\"),\n\tperson(\"Josh\", \"Gray\", role = \"ctb\"),\n\tperson(\"Jonathan A.\", \"Greenberg\", role = \"ctb\"),\n\tperson(\"Paul\", \"Hiemstra\", role = \"ctb\"),\n\tperson(\"Kassel\", \"Hingee\", role = \"ctb\"),\n\tperson(\"Alex\", \"Ilich\", role = \"ctb\"),\n\tperson(\"Institute for Mathematics Applied Geosciences\", role=\"cph\"),\n\tperson(\"Charles\", \"Karney\", role = \"ctb\"),\n\tperson(\"Matteo\", \"Mattiuzzi\", role = \"ctb\"),\n\tperson(\"Steven\", \"Mosher\", role = \"ctb\"),\n\tperson(\"Babak\", \"Naimi\", role = \"ctb\"),\t\n\tperson(\"Jakub\", \"Nowosad\", role = \"ctb\"),\n\tperson(\"Edzer\", \"Pebesma\", role = \"ctb\"),\n\tperson(\"Oscar\", \"Perpinan Lamigueiro\", role = \"ctb\"),\n\tperson(\"Etienne B.\", \"Racine\", role = \"ctb\"),\n\tperson(\"Barry\", \"Rowlingson\", role = \"ctb\"),\n\tperson(\"Ashton\", \"Shortridge\", role = \"ctb\"),\n\tperson(\"Bill\", \"Venables\", role = \"ctb\"),\n\tperson(\"Rafael\", \"Wueest\", role = \"ctb\")\n\t)",
+        "NeedsCompilation": "yes",
+        "Packaged": "2025-03-28 04:28:45 UTC; rhijm",
+        "Author": "Robert J. Hijmans [cre, aut] (<https://orcid.org/0000-0001-5872-2872>),\n  Jacob van Etten [ctb],\n  Michael Sumner [ctb],\n  Joe Cheng [ctb],\n  Dan Baston [ctb],\n  Andrew Bevan [ctb],\n  Roger Bivand [ctb],\n  Lorenzo Busetto [ctb],\n  Mort Canty [ctb],\n  Ben Fasoli [ctb],\n  David Forrest [ctb],\n  Aniruddha Ghosh [ctb],\n  Duncan Golicher [ctb],\n  Josh Gray [ctb],\n  Jonathan A. Greenberg [ctb],\n  Paul Hiemstra [ctb],\n  Kassel Hingee [ctb],\n  Alex Ilich [ctb],\n  Institute for Mathematics Applied Geosciences [cph],\n  Charles Karney [ctb],\n  Matteo Mattiuzzi [ctb],\n  Steven Mosher [ctb],\n  Babak Naimi [ctb],\n  Jakub Nowosad [ctb],\n  Edzer Pebesma [ctb],\n  Oscar Perpinan Lamigueiro [ctb],\n  Etienne B. Racine [ctb],\n  Barry Rowlingson [ctb],\n  Ashton Shortridge [ctb],\n  Bill Venables [ctb],\n  Rafael Wueest [ctb]",
+        "Maintainer": "Robert J. Hijmans <r.hijmans@gmail.com>",
+        "Repository": "CRAN",
+        "Date/Publication": "2025-03-28 08:10:02 UTC",
+        "Built": "R 4.5.0; aarch64-apple-darwin20; 2025-04-01 06:38:49 UTC; unix",
+        "Archs": "raster.so.dSYM"
       }
     },
     "readr": {
@@ -2181,6 +2321,33 @@
         "Archs": "sourcetools.so.dSYM"
       }
     },
+    "sp": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "sp",
+        "Version": "2.2-0",
+        "Title": "Classes and Methods for Spatial Data",
+        "Authors@R": "c(person(\"Edzer\", \"Pebesma\", role = c(\"aut\", \"cre\"),\n\t\t\t\temail = \"edzer.pebesma@uni-muenster.de\"),\n\t\t\tperson(\"Roger\", \"Bivand\", role = \"aut\",\n            \temail = \"Roger.Bivand@nhh.no\"),\n\t\t\tperson(\"Barry\", \"Rowlingson\", role = \"ctb\"),\n\t\t\tperson(\"Virgilio\", \"Gomez-Rubio\", role = \"ctb\"),\n\t\t\tperson(\"Robert\", \"Hijmans\", role = \"ctb\"),\n\t\t\tperson(\"Michael\", \"Sumner\", role = \"ctb\"),\n\t\t\tperson(\"Don\", \"MacQueen\", role = \"ctb\"),\n\t\t\tperson(\"Jim\", \"Lemon\", role = \"ctb\"),\n                        person(\"Finn\", \"Lindgren\", role = \"ctb\"),\n\t\t\tperson(\"Josh\", \"O'Brien\", role = \"ctb\"),\n\t\t\tperson(\"Joseph\", \"O'Rourke\", role = \"ctb\"),\n                        person(\"Patrick\", \"Hausmann\", role = \"ctb\"))",
+        "Depends": "R (>= 3.5.0), methods",
+        "Imports": "utils, stats, graphics, grDevices, lattice, grid",
+        "Suggests": "RColorBrewer, gstat, deldir, knitr, maps, mapview, rmarkdown,\nsf, terra, raster",
+        "Description": "Classes and methods for spatial\n  data; the classes document where the spatial location information\n  resides, for 2D or 3D data. Utility functions are provided, e.g. for\n  plotting data as maps, spatial selection, as well as methods for\n  retrieving coordinates, for subsetting, print, summary, etc. From this\n  version, 'rgdal', 'maptools', and 'rgeos' are no longer used at all,\n  see <https://r-spatial.org/r/2023/05/15/evolution4.html> for details.",
+        "License": "GPL (>= 2)",
+        "URL": "https://github.com/edzer/sp/ https://edzer.github.io/sp/",
+        "BugReports": "https://github.com/edzer/sp/issues",
+        "Collate": "bpy.colors.R AAA.R Class-CRS.R CRS-methods.R Class-Spatial.R\nSpatial-methods.R projected.R Class-SpatialPoints.R\nSpatialPoints-methods.R Class-SpatialPointsDataFrame.R\nSpatialPointsDataFrame-methods.R Class-SpatialMultiPoints.R\nSpatialMultiPoints-methods.R\nClass-SpatialMultiPointsDataFrame.R\nSpatialMultiPointsDataFrame-methods.R Class-GridTopology.R\nClass-SpatialGrid.R Class-SpatialGridDataFrame.R\nClass-SpatialLines.R SpatialLines-methods.R\nClass-SpatialLinesDataFrame.R SpatialLinesDataFrame-methods.R\nClass-SpatialPolygons.R Class-SpatialPolygonsDataFrame.R\nSpatialPolygons-methods.R SpatialPolygonsDataFrame-methods.R\nGridTopology-methods.R SpatialGrid-methods.R\nSpatialGridDataFrame-methods.R SpatialPolygons-internals.R\npoint.in.polygon.R SpatialPolygons-displayMethods.R zerodist.R\nimage.R stack.R bubble.R mapasp.R select.spatial.R gridded.R\nasciigrid.R spplot.R over.R spsample.R recenter.R dms.R\ngridlines.R spdists.R rbind.R flipSGDF.R chfids.R loadmeuse.R\ncompassRose.R surfaceArea.R spOptions.R subset.R disaggregate.R\nsp_spat1.R merge.R aggregate.R elide.R sp2Mondrian.R",
+        "VignetteBuilder": "knitr",
+        "NeedsCompilation": "yes",
+        "Packaged": "2025-01-30 11:06:55 UTC; edzer",
+        "Author": "Edzer Pebesma [aut, cre],\n  Roger Bivand [aut],\n  Barry Rowlingson [ctb],\n  Virgilio Gomez-Rubio [ctb],\n  Robert Hijmans [ctb],\n  Michael Sumner [ctb],\n  Don MacQueen [ctb],\n  Jim Lemon [ctb],\n  Finn Lindgren [ctb],\n  Josh O'Brien [ctb],\n  Joseph O'Rourke [ctb],\n  Patrick Hausmann [ctb]",
+        "Maintainer": "Edzer Pebesma <edzer.pebesma@uni-muenster.de>",
+        "Repository": "CRAN",
+        "Date/Publication": "2025-02-01 09:40:02 UTC",
+        "Built": "R 4.5.0; aarch64-apple-darwin20; 2025-03-31 21:49:21 UTC; unix",
+        "Archs": "sp.so.dSYM"
+      }
+    },
     "stringi": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -2343,6 +2510,41 @@
         "Date/Publication": "2025-06-08 12:10:02 UTC",
         "Built": "R 4.5.0; aarch64-apple-darwin20; 2025-06-08 13:50:10 UTC; unix",
         "Archs": "tibble.so.dSYM"
+      }
+    },
+    "tidygeocoder": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "tidygeocoder",
+        "Type": "Package",
+        "Title": "Geocoding Made Easy",
+        "Version": "1.0.6",
+        "Authors@R": "\n    c(person(given = \"Jesse\",\n             family = \"Cambon\",\n             role = c(\"aut\", \"cre\"),\n             email = \"jesse.cambon@gmail.com\",\n             comment = c(ORCID = \"0000-0001-6854-1514\")),\n      person(given = \"Diego\",\n             family = \"Hernangómez\",\n             role = \"aut\",\n             email = \"diego.hernangomezherrero@gmail.com\",\n             comment = c(ORCID = \"0000-0001-8457-4658\")),\n      person(given = \"Christopher\",\n             family = \"Belanger\",\n             role = \"aut\",\n             email = \"christopher.a.belanger@gmail.com\",\n             comment = c(ORCID = \"0000-0003-2070-5721\")),\n      person(given = \"Daniel\", \n             family = \"Possenriede\", \n             email = \"possenriede+r@gmail.com\", \n             role = \"aut\", \n             comment = c(ORCID = \"0000-0002-6738-9845\")),\n      person(given = \"Otto\", \n             family = \"Hansen\", \n             email = \"otto@uchicago.edu\", \n             role = \"ctb\", \n             comment = c(ORCID = \"0000-0002-4618-5667\"))\n             )",
+        "Description": "An intuitive interface for getting data from geocoding services. ",
+        "License": "MIT + file LICENSE",
+        "URL": "https://jessecambon.github.io/tidygeocoder/,\nhttps://github.com/jessecambon/tidygeocoder",
+        "BugReports": "https://github.com/jessecambon/tidygeocoder/issues",
+        "Depends": "R (>= 3.5)",
+        "Imports": "tibble, dplyr, httr, jsonlite, progress",
+        "Suggests": "knitr, rmarkdown, ggplot2, ggrepel, maps, testthat (>=\n3.0.2), spelling",
+        "VignetteBuilder": "knitr",
+        "Encoding": "UTF-8",
+        "LazyData": "true",
+        "RoxygenNote": "7.3.2",
+        "Language": "en-US",
+        "NeedsCompilation": "no",
+        "Packaged": "2025-03-31 12:48:35 UTC; cambonator",
+        "Author": "Jesse Cambon [aut, cre] (<https://orcid.org/0000-0001-6854-1514>),\n  Diego Hernangómez [aut] (<https://orcid.org/0000-0001-8457-4658>),\n  Christopher Belanger [aut] (<https://orcid.org/0000-0003-2070-5721>),\n  Daniel Possenriede [aut] (<https://orcid.org/0000-0002-6738-9845>),\n  Otto Hansen [ctb] (<https://orcid.org/0000-0002-4618-5667>)",
+        "Maintainer": "Jesse Cambon <jesse.cambon@gmail.com>",
+        "Repository": "CRAN",
+        "Date/Publication": "2025-03-31 13:30:02 UTC",
+        "Built": "R 4.5.0; ; 2025-04-02 04:31:09 UTC; unix",
+        "RemoteType": "standard",
+        "RemotePkgRef": "tidygeocoder",
+        "RemoteRef": "tidygeocoder",
+        "RemoteRepos": "https://cran.rstudio.com",
+        "RemoteSha": "1.0.6"
       }
     },
     "tidyr": {
@@ -2791,7 +2993,7 @@
   },
   "files": {
     "app.R": {
-      "checksum": "cf7b88fc88c34c6a266d74572adab3c3"
+      "checksum": "5d2c37c9b8a72f06e02ae3d904a34f74"
     },
     "data/06/YW_2017.002_20230601.nc": {
       "checksum": "606a9893d9acec6872e1d4eb856372ff"
@@ -2902,16 +3104,16 @@
       "checksum": "adba1632ed19b8b617857f70d40ad4e8"
     },
     "R/mod_import.R": {
-      "checksum": "9cdce3084248702d81deefe761098791"
+      "checksum": "4c67c4f8eb877e8f41b51022eb343627"
     },
     "R/mod_plot.R": {
-      "checksum": "0ab89b0f94781d0c13363d3ef03f623f"
+      "checksum": "b0fd932bc17b299664637b0241abe770"
     },
     "R/mod_process.R": {
-      "checksum": "eeb4b8b886f05aacc6c0606dfa4dbbe3"
+      "checksum": "1be4eaaeca75c226c0dc9ace7584f3f1"
     },
     "R/utils.R": {
-      "checksum": "ec8221dd5525b2751adcf20d381cb096"
+      "checksum": "c72f676aeb4ada89715648d8f53b730b"
     },
     "README.md": {
       "checksum": "a880c2be6bf36a20266252297cbd73ba"
