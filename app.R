@@ -28,18 +28,11 @@ options(shiny.maxRequestSize = 500 * 1024^2)
 
 app_header <- tags$div(
   class = "custom-navbar",
-  div(
-    class = "branding-left",
-    img(src = "www/logo_hydrostorm.png", class = "branding-logo"),
-    tags$div(
-      class = "branding-text",
-      tags$div("HydroStorm", class = "branding-title"),
-      tags$div("Radarbasierte Analyse von Starkregenereignissen", class = "branding-subtitle")
-    )
-  ),
-  div(
-    class = "branding-right",
-    actionLink("go_info", "Info & Hilfe", class = "btn-link about-link")
+  img(src = "www/logo_hydrostorm.png", class = "branding-logo"),
+  tags$div(
+    class = "branding-text",
+    tags$div("HydroStorm", class = "branding-title"),
+    tags$div("Radarbasierte Analyse von Starkregenereignissen", class = "branding-subtitle")
   )
 )
 
