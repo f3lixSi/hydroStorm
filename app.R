@@ -14,6 +14,7 @@ library(data.table)
 library(readr)
 library(jsonlite)
 library(DT)
+library(tidygeocoder)
 
 # Module laden
 source("R/mod_import.R")
@@ -192,8 +193,9 @@ server <- function(input, output, session) {
   
   # Shared reactive values
   shared <- reactiveValues(rast = NULL, shape = NULL, shape_25832 = NULL,
+                           pt_ll = NULL, pt_radklim = NULL, pt_2583 = NULL,
                            result = NULL, kostra = NULL, dt_min = NULL,
-                           product = NULL, radklim_path = NULL)
+                           product = NULL, radklim_path = NULL, times = NULL)
   
   # Module
   callModule(importServer,  "imp",  shared = shared)

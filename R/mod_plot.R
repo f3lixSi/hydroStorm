@@ -138,10 +138,18 @@ plotServer <- function(input, output, session, shared) {
       if (nzchar(input$kostra_index)) {
         kostra <- get_kostra_data(index = input$kostra_index)
       } else {
-        req(shared$shape_25832)
-        e <- terra::ext(shared$shape_25832)
-        x <- (e[1] + e[2]) / 2
-        y <- (e[3] + e[4]) / 2
+        # Shape oder Punkt als Koordinate für KOSTRA verwenden
+        if (!is.null(shared$shape_25832)) {
+          e <- terra::ext(shared$shape_25832)
+          x <- (e[1] + e[2]) / 2
+          y <- (e[3] + e[4]) / 2
+        } else if (!is.null(shared$pt_25832)) {
+          coords <- sf::st_coordinates(shared$pt_25832)
+          x <- coords[1]
+          y <- coords[2]
+        } else {
+          stop("Keine Geometrie für KOSTRA-Abfrage vorhanden. Bitte Shape laden oder Punkt setzen.")
+        }
         kostra <- get_kostra_data(x = x, y = y)
       }
       

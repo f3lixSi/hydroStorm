@@ -35,11 +35,7 @@ processUI <- function(id) {
     tags$hr(),
     verbatimTextOutput(ns("log")),
     
-    shinycssloaders::withSpinner(
-      DTOutput(ns("preview_table")),
-      type  = 6,
-      color = "#004E7C"
-    )
+    DTOutput(ns("preview_table"))
   )
 }
 
@@ -47,48 +43,86 @@ processServer <- function(input, output, session, shared) {
   ns <- session$ns
   
   observeEvent(input$run_proc, {
-    req(shared$rast, shared$shape, shared$times, shared$dt_min)
+    # Raster + Zeitinfos müssen da sein, Gebiet kommt als Shape ODER Punkt
+    req(shared$rast, shared$times, shared$shape)
     
     withProgress(message = "Verarbeitung läuft …", value = 0, {
-      incProgress(0.2, detail = "Maske auf Raster-KBS prüfen …")
+      
+      ## 1) Auswertungsgeometrie in Raster-KBS vorbereiten --------------------
+      incProgress(0.2, detail = "Auswertungsgebiet auf Raster-KBS bringen …")
       
       r_crs <- terra::crs(shared$rast)
-      s_crs <- terra::crs(shared$shape)
-      shape_proj <- if (!identical(r_crs, s_crs)) {
-        terra::project(shared$shape, r_crs)
+      geom_radklim <- NULL
+      
+      if (!is.null(shared$shape)) {
+        # Fall 1: Polygon-Maske vorhanden
+        s_crs <- terra::crs(shared$shape)
+        geom_radklim <- if (!identical(r_crs, s_crs)) {
+          terra::project(shared$shape, r_crs)
+        } else {
+          shared$shape
+        }
+      } else if (!is.null(shared$pt_ll)) {
+        # Fall 2: Punkt aus Leaflet (WGS84) vorhanden
+        v_ll <- terra::vect(shared$pt_ll)      # shared$pt_ll: sf in EPSG:4326
+        geom_radklim <- terra::project(v_ll, r_crs)
       } else {
-        shared$shape
+        stop("Kein Auswertungsgebiet gefunden. Bitte Shape laden oder Punkt in der Karte setzen.")
       }
       
-      # 1) Flächenaggregat je Zeitschritt
+      ## 2) Flächenaggregat je Zeitschritt ------------------------------------
       incProgress(0.4, detail = "Flächenaggregation je Zeitschritt …")
       
       agg_fun_name <- if (identical(input$agg_fun, "mean")) "mean" else "max"
       vals <- terra::extract(
         shared$rast,
-        shape_proj,
+        geom_radklim,
         fun   = match.fun(agg_fun_name),
         na.rm = TRUE,
         ID    = FALSE
       )
       if (is.null(vals) || ncol(vals) == 0) {
-        stop("Clip-Ergebnis ist leer (alles NA). Liegt das Shape im RADKLIM-Gebiet?")
+        stop("Clip-Ergebnis ist leer (alles NA). Liegt das Shape bzw. der Punkt im RADKLIM-Gebiet?")
       }
       
       series_mm <- as.numeric(vals[1, ])
       times     <- shared$times
-      dt_min    <- shared$dt_min
       
       if (length(series_mm) != length(times)) {
         stop("Längen von Zeitvektor und Wertvektor stimmen nicht überein.")
       }
       
-      # 2) Dauerstufen bilden
+      # --- Zeitbasis (dt_min) NUR aus Zeitvektor bestimmen ---
+      #   -> YW:  5 min
+      #   -> RW: 60 min
+      times_posix <- if (inherits(times, "POSIXt")) {
+        times
+      } else {
+        as.POSIXct(times, tz = "UTC")
+      }
+      
+      if (length(times_posix) < 2) {
+        stop("Zu wenige Zeitstempel, um die Zeitbasis zu bestimmen.")
+      }
+      
+      dt_min <- as.integer(round(
+        as.numeric(difftime(times_posix[2], times_posix[1], units = "mins"))
+      ))
+      
+      # Fallback, falls irgendwas schiefgeht
+      if (is.na(dt_min) || dt_min <= 0) {
+        dt_min <- 60L
+      }
+      
+      # Für spätere Nutzung einmal merken
+      shared$dt_min <- dt_min
+      
+      ## 3) Dauerstufen bilden -------------------------------------------------
       incProgress(0.7, detail = "Dauerstufen aggregieren …")
       
       durations <- sort(unique(as.integer(input$durations)))
       DT <- data.table(
-        Zeit   = as.POSIXct(times, tz = "UTC"),
+        Zeit     = as.POSIXct(times, tz = "UTC"),
         value_mm = series_mm
       )
       
@@ -104,7 +138,7 @@ processServer <- function(input, output, session, shared) {
         }
       }
       
-      # 3) Spaltennamen & Format
+      ## 4) Spaltennamen & Format ---------------------------------------------
       agg_label <- if (identical(input$agg_fun, "mean")) "Mittelwert" else "Max"
       
       nice_names <- names(DT)
