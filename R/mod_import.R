@@ -9,7 +9,8 @@ importUI <- function(id) {
     fileInput(
       ns("raster"),
       "RADKLIM-Datei (.nc)",
-      accept = ".nc"
+      accept = ".nc",
+      multiple = TRUE
     ),
     dateRangeInput(
       ns("daterange"),

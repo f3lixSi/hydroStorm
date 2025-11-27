@@ -110,7 +110,7 @@ info_help_tab <- tabPanel(
     tags$ul(
       tags$li(
         "Der KOSTRA-Abgleich verwendet die offizielle KOSTRA-REST-API. ",
-        "Hierfür wird ein gültiger API-Key (Umgebungsvariable ", code("KOSTRA_KEY"), ") benötigt."
+        "Hierfür ist ein gültiger API-Key implementiert."
       ),
       tags$li(
         "Die abgefragten KOSTRA-Werte beziehen sich auf die im KOSTRA-Datensatz definierten ",

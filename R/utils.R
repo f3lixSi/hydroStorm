@@ -55,9 +55,16 @@ read_radklim_nc <- function(path, t_start = NULL, t_end = NULL, fname = NULL) {
   if (!is.na(fv) && is.finite(fv)) r[r == fv] <- NA
   if (!is.na(mv) && is.finite(mv)) r[r == mv] <- NA
   
-  # Produkt & Zeitschritt **auf Basis des echten Dateinamens**
-  prod   <- if (grepl("YW", ref_name, ignore.case = TRUE)) "YW2017.002" else "RW2017.002"
-  dt_min <- if (grepl("YW", prod)) 5L else 60L
+  # ref_name ist ein Vektor, wenn mehrere Dateien gewählt wurden
+  is_yw <- grepl("YW", ref_name, ignore.case = TRUE)
+  
+  # Sicherheit: nicht YW und RW mischen
+  if (any(is_yw) && any(!is_yw)) {
+    stop("Bitte nicht YW- und RW-Dateien mischen.")
+  }
+  
+  prod   <- if (any(is_yw)) "YW2017.002" else "RW2017.002"
+  dt_min <- if (prod == "YW2017.002") 5L else 60L
   
   # Zeitraumfilter (ganze Tage)
   if (!is.null(t_start) && !is.null(t_end)) {
