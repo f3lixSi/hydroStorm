@@ -5,7 +5,7 @@
 # HydroStorm
 **Radarbasierte Analyse von Starkregenereignissen**
 
-HydroStorm ist eine modulare Shiny-App zur Auswertung radarbasierter Niederschlagsdaten (aktuell: RADKLIM / RADOLAN-Nachfolgeprodukte) für Starkregenanalysen über frei wählbare Untersuchungsgebiete.
+HydroStorm ist eine modulare Shiny-App zur Auswertung radarbasierter Niederschlagsdaten (aktuell: RADKLIM / RADOLAN) für Starkregenanalysen über frei wählbare Untersuchungsgebiete.
 
 ---
 
