@@ -23,7 +23,7 @@ source("R/mod_plot.R")
 source("R/utils.R")
 
 # Upload-Limit
-options(shiny.maxRequestSize = 500 * 1024^2)
+options(shiny.maxRequestSize = 1000 * 1024^2)
 
 # ---- Branding-Header ---------------------------------------------------------
 
