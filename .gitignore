@@ -11,9 +11,8 @@
 .Rcheck/
 .Rapp.history
 
-# renv (falls doch wieder angelegt, aber wir wollen es NICHT nutzen)
-renv/
-renv.lock
+# renv 
+renv/library
 
 # Große Rohdaten / Geodaten (nicht ins Repo)
 *.nc
