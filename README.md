@@ -5,212 +5,118 @@
 # HydroStorm
 **Radarbasierte Analyse von Starkregenereignissen**
 
-HydroStorm ist eine modulare Shiny-App zur Auswertung radarbasierter Niederschlagsdaten (aktuell: RADKLIM / RADOLAN) für Starkregenanalysen über frei wählbare Untersuchungsgebiete.
+HydroStorm ist eine modulare Shiny-App zur Auswertung radarbasierter Niederschlagsdaten (RADKLIM/RADOLAN, Produkte YW und RW) für Starkregenanalysen über frei wählbare Untersuchungsgebiete. Die App bildet Dauerstufen-Zeitreihen, stellt sie KOSTRA gegenüber, ordnet Ereignisse nach dem **Starkregenindex (SRI)** ein und erzeugt auf Wunsch einen **Bericht als Word oder PDF**.
 
 ---
 
-## 🔧 Aktueller Funktionsumfang
+## 🔧 Funktionsumfang
 
-Die App besteht aus drei Hauptreitern:
+Die App besteht aus fünf Reitern:
 
 1. **📂 Datenimport**
 2. **⚙️ Verarbeitung & Analyse**
-3. **📊 Ergebnisse (inkl. KOSTRA-Abgleich)**
+3. **📊 Ergebnisse** (Zeitreihe, KOSTRA-Vergleich, SRI-Einordnung)
+4. **📄 Bericht** (Word/PDF)
+5. **ℹ️ Info & Hilfe**
 
 ### 1️⃣ Datenimport
 
-Im Tab **„Datenimport“** werden die Eingangsdaten geladen:
-
-- **RADKLIM / RADOLAN-NetCDF**
-  - Erwartet wird aktuell eine einzelne `.nc`-Datei (z. B. `YW_2017.002_YYYYMMDD.nc`).
-  - Die App:
-    - liest die Datei mit `terra::rast()`,
-    - setzt **Koordinatensystem** (stereographische Projektion wie bei RADKLIM),
-    - setzt den **Extent** auf den offiziellen RADOLAN/RADKLIM-Ausschnitt,
-    - liest die **Zeitachse** aus (`terra::time()` oder abgeleitet aus dem Dateinamen),
-    - wandelt die Werte bei Bedarf von **mm/h** in **mm pro Zeitschritt** (5 min bei YW, 60 min bei RW).
-
-- **Zeitfilter**
-  - Nach dem Einlesen wird der in der Datei enthaltene Zeitraum ermittelt.
-  - Der `dateRangeInput` wird automatisch auf `min(t)`–`max(t)` gesetzt.
-  - Beim Laden („**Daten laden**“) wird der Zeitbereich entsprechend gefiltert.
-
-- **Untersuchungsgebiet (Maske)**
-  - Upload eines **Shapefiles** über mehrere Dateien:
-    - Alle vier Standard-Bestandteile müssen gemeinsam ausgewählt werden:  
-      `.shp`, `.dbf`, `.shx`, `.prj`.
-  - Die App:
-    - kopiert die ausgewählten Dateien in ein temporäres Verzeichnis,
-    - liest das Shapefile mit `terra::vect()`,
-    - reprojiziert die Maske automatisch auf das **Koordinatensystem des RADKLIM-Rasters**.
-
-- **Preview**
-  - Ein **Vorschauplot** zeigt:
-    - den ersten RADKLIM-Layer,
-    - darüber die reprojizierte Maske.
-  - Zusätzlich wird im Info-Text angezeigt:
-    - Anzahl der Layer,
-    - Zeitspanne,
-    - Fläche der Maske (km²).
-
----
+- **RADKLIM/RADOLAN-NetCDF** (`.nc`): eine oder mehrere Dateien (z. B. mehrere Tage) werden geladen, zusammengefügt, mit stereografischer Projektion und RADOLAN-Extent versehen; die Zeitachse kommt aus `terra::time()` oder – als Fallback – aus dem Dateinamen.
+- **Auswertungsgebiet** in drei Varianten:
+  - **Shapefile** (`.shp`, `.dbf`, `.shx`, `.prj` gemeinsam auswählen),
+  - **Punkt** direkt in die Karte klicken,
+  - **Adresse** eingeben und über OpenStreetMap/Nominatim geokodieren.
+  - Punkt und Adresse werden intern zu einem 1-km-Puffer.
+- **Zeitfilter**: nach dem Upload wird der verfügbare Zeitraum automatisch gesetzt.
+- **Interaktive Karte**: nach dem Laden wird die Niederschlagssumme über den Zeitraum halbtransparent über eine OpenStreetMap-Karte gelegt (mit Farblegende), zoombar; das Gebiet bzw. der Punkt werden markiert.
+- **Ortsname**: wird automatisch bestimmt (eingegebene Adresse bzw. Reverse-Geocoding des Schwerpunkts) und in Plots/Bericht verwendet.
 
 ### 2️⃣ Verarbeitung & Analyse
 
-Im Tab **„⚙️ Verarbeitung & Analyse“** werden die Daten zugeschnitten und zeitlich aggregiert.
+- Auswahl der **Dauerstufen** (Minuten).
+- Wahl des **Flächenkennwerts** je Zeitschritt: **Mittelwert** (Standard) oder **Maximum** über das Gebiet (`terra::extract`).
+- Aufbau der Zeitreihe und **rechtsbündiger gleitender Summen** je Dauerstufe (`data.table::frollsum`).
+- Ausgabe als scrollbare Tabelle.
 
-- **Eingaben**
-  - Auswahl der **Dauerstufen** (in Minuten), z. B. `30, 60, 120, 360, 720, 1440`.
-  - Auswahl des **Flächenkennwerts**:
-    - `max` → Flächenmaximum je Zeitschritt,
-    - `mean` → Flächenmittelwert je Zeitschritt.
+### 3️⃣ Ergebnisse
 
-- **Ablauf bei „Analyse starten“**
-  1. **Maske → Raster-KBS**  
-     Die Maske wird falls nötig auf das CRS des RADKLIM-Rasters reprojiziert.
-  2. **Flächenkennwert je Zeitschritt**  
-     Mit `terra::extract(r, shape, fun = max/mean, na.rm = TRUE, ID = FALSE)` wird für jeden Zeitschritt ein Wert über das Gebiet bestimmt.
-  3. **Zeitreihenaufbau**  
-     Es entsteht eine Zeitreihe:
-     - `datetime` (POSIXct),
-     - `Max [mm] (Flächenmaximum)` *oder*  
-       `Mean [mm] (Flächenmittelwert)` – je nach Auswahl.
-  4. **Dauerstufenaggregation**
-     - Die Basiszeitauflösung (`dt_min`) wird aus dem Produkt abgeleitet:
-       - YW → 5 min,
-       - RW → 60 min (aktuell unterstützt).
-     - Für jede gewählte Dauerstufe \( D \) wird
-       eine **gleitende Summe** mit Fensterbreite  
-       \( w = D / dt\_\text{min} \) mittels `data.table::frollsum()` berechnet.
-     - Die aggregierten Spalten heißen z. B.:
-       - `D = 30 min [mm]`, `D = 60 min [mm]`, …
+- **Zeitreihe (interaktiv, plotly)** je Dauerstufe mit Hover/Zoom; **Export** als PNG/PDF/SVG in wählbarer Größe/Auflösung (`ggsave`).
+- **KOSTRA-Abgleich** über die offizielle REST-API (Kachelindex oder automatisch über Gebiets-/Punktkoordinate in EPSG:25832).
+- **Dauerstufenvergleich HydroStorm vs. KOSTRA** – optional mit **SRI-Einfärbung** der Ereignis-Punkte (per Checkbox an/aus).
+- **SRI-Einordnung**: farbige Kachel mit dem maßgebenden Starkregenindex und Tabelle je Dauerstufe.
+- **CSV-Export** von HydroStorm- und KOSTRA-Daten.
 
-- **Ausgabe**
-  - Die Ergebnisse werden als **scrollbare Tabelle** angezeigt (DataTable ohne Seitenblätterung).
-  - Darstellung:
-    - Zeitstempel im Format `YYYY-MM-DD HH:MM`,
-    - alle numerischen Werte auf **2 Nachkommastellen** gerundet.
+### 4️⃣ Bericht
+
+- Export als **Word** oder **PDF** mit Titelkopf/Metadaten (Ort, Zeitraum, Produkt, Modus, Aggregation), maßgebender SRI-Infobox, Zeitreihen-Plot, KOSTRA-Vergleich mit SRI und SRI-/KOSTRA-Tabellen.
+- Logo in der Kopfzeile, Seitenzahl in der Fußzeile; PDF im Arial-Satz, KOSTRA-Tabelle im Querformat.
+- Grundlage sind die im Reiter „Ergebnisse“ gewählten Einstellungen. PDF benötigt eine LaTeX-Installation (`tinytex`); Word funktioniert ohne.
 
 ---
 
-### 3️⃣ Ergebnisse & KOSTRA-Abgleich
+## 📐 Starkregenindex (SRI)
 
-Im Tab **„📊 Ergebnisse“** werden die analysierten Zeitreihen und der Vergleich mit KOSTRA dargestellt.
+Einordnung nach dem einheitlichen Verfahren von **Schmitt et al. (2018)**: Je Dauerstufe wird die beobachtete Niederschlagshöhe über KOSTRA einer Wiederkehrzeit zugeordnet und daraus der Index 1–12 abgeleitet.
 
-#### 3.1 Zeitreihe (HydroStorm)
+| SRI | Kriterium | Kategorie |
+|----|----|----|
+| 1 | 1–2 a | Starkregen |
+| 2 | 3–5 a | Starkregen |
+| 3 | 10 a | intensiver Starkregen |
+| 4 | 20 a | intensiver Starkregen |
+| 5 | 30 a | außergewöhnlicher Starkregen |
+| 6 | 50 a | außergewöhnlicher Starkregen |
+| 7 | 100 a | außergewöhnlicher Starkregen |
+| 8–12 | > 100 a über Faktor hN/hN(100a) | extremer Starkregen |
 
-- Plot „**Zeitreihe (HydroStorm)**“:
-  - Auswahl, ob
-    - die **Originalzeitreihe** (Basis-Zeitschritt), oder
-    - eine **aggregierte Dauerstufe** (z. B. 60 min)
-    geplottet werden soll.
-  - Auswahl der **verfügbaren Dauerstufen**:
-    - es werden nur diejenigen Dauerstufen angeboten,  
-      die in der Verarbeitung tatsächlich berechnet wurden.
-  - Darstellung:
-    - Liniendiagramm `Niederschlag [mm]` über der Zeit,
-    - Titel und Untertitel mit Produktkennung, Zeitraum usw.
-
-#### 3.2 KOSTRA-Abgleich
-
-- **KOSTRA-Abruf**
-  - Die App nutzt die offizielle **KOSTRA REST-API**.
-  - Zwei Modi:
-    1. **Direkt über Kachelindex**  
-       Eingabe des KOSTRA-Kachelindex (z. B. `129105`).
-    2. **Über Koordinate**  
-       Wird kein Index eingegeben, wird der **Schwerpunkt des Untersuchungsgebiets** verwendet:
-       - dafür liegt parallel zur RADKLIM-Maske eine zweite Maske in **EPSG:25832** vor (`shared$shape_25832`),
-       - der Mittelpunkt wird an die KOSTRA-API übergeben.
-  - Der API-Schlüssel wird über die Umgebungsvariable `KOSTRA_KEY` bereitgestellt.
-
-- **KOSTRA-Datenstruktur**
-  - Die API liefert für verschiedene:
-    - **Dauerstufen** (z. B. 5 min bis 1440 min),
-    - **Jährlichkeiten** (z. B. 1, 2, 3, 5, 10, 20, 30, 50, 100 a),
-    - **Typen**:  
-      - `HN` (Niederschlagshöhen),  
-      - `RN` (Regenspenden),  
-      - `UC` (Unsicherheiten),
-    entsprechende Werte.
-  - In der App wird das in ein `data.table` umgewandelt und aufbereitet:
-    - Fokus im Vergleich: **HN (Niederschlagshöhen)**
-    - Werte werden auf **1 Nachkommastelle** gerundet.
-
-- **Dauerstufen-Vergleichsplot**
-  - Plot „**Dauerstufenvergleich (HydroStorm vs. KOSTRA)**“:
-    - HydroStorm:
-      - für jede Dauerstufe wird das **Maximum** der aggregierten Zeitreihe verwendet.
-    - KOSTRA:
-      - aus den HN-Werten für eine wählbare **Jährlichkeit** \( T \) (z. B. 2, 5, 10, 20, 50, 100 a).
-    - Steuerung über:
-      - Auswahl der Jährlichkeit \( T \) (Dropdown),
-      - ggf. KOSTRA-Kachelindex.
-    - Darstellung:
-      - log-Skala der Dauerstufe (x-Achse),
-      - Niederschlagshöhe in mm (y-Achse),
-      - Legende mit:
-        - „HydroStorm“ (Ereignis),
-        - „T = xx a“ (gewählte KOSTRA-Jährlichkeit).
-
-- **KOSTRA-Tabelle**
-  - Zusätzlich wird eine **Tabelle mit den KOSTRA-HN-Werten** angezeigt:
-    - Zeilen: Dauerstufen (in Minuten),
-    - Spalten: Jährlichkeiten \( T \),
-    - Zellen: Niederschlagshöhen [mm] (eine Nachkommastelle),
-    - Tabelle ist horizontal und vertikal scrollbar,
-    - optionaler CSV-Export der KOSTRA-Daten.
-
----
-
-## 💾 CSV-Export
-
-- **HydroStorm-Ergebnisse**
-  - Download der aggregierten Zeitreihe (inkl. aller Dauerstufen) als CSV.
-- **KOSTRA-Daten**
-  - Download der vollständigen KOSTRA-Tabelle (alle Dauerstufen × alle Jährlichkeiten) als CSV.
+Der maßgebende SRI eines Ereignisses ist das Maximum über alle Dauerstufen. Für den Bereich über 100 a (SRI 8–12) wird der Extrapolationsfaktor `hN/hN(100a)` gebildet.
 
 ---
 
 ## 🔌 Technische Architektur
 
-Die App ist modular aufgebaut:
+- `app.R` – UI (navbarPage) und Server, initialisiert `reactiveValues(shared)` (Raster, Gebiet, Zeitachse, Produkt, Ergebnis, KOSTRA, Ort, Auswahl u. a.) und bindet die Module ein.
+- `R/mod_import.R` – Datenimport (NetCDF, Gebietswahl, Reverse-Geocoding, interaktive Leaflet-Karte mit Raster-Overlay).
+- `R/mod_process.R` – Verarbeitung (Flächenkennwert, Dauerstufenaggregation, Tabelle).
+- `R/mod_plot.R` – Ergebnisse (interaktive Plots, KOSTRA-Abgleich, SRI-Reiter, Export).
+- `R/mod_report.R` – Bericht-Export (Word/PDF via R Markdown).
+- `R/utils.R` – Hilfsfunktionen: RADKLIM-Einlesen, KOSTRA-API, Ortsbestimmung, SRI-Logik (`compute_sri`, `SRI_COLORS`) sowie die wiederverwendbaren Plot-/Tabellen-Bausteine (`hydro_ts_plot`, `hydro_kostra_plot`, `hydro_sri_table`), die App und Bericht gemeinsam nutzen.
+- `report/hydrostorm_report.Rmd` – parametrisierte Berichtsvorlage (Word + PDF).
+- `report/reference.docx` – Word-Referenzvorlage mit Logo-Kopfzeile.
 
-- `app.R`
-  - UI (navbarPage) & Server-Logik,
-  - initialisiert `reactiveValues(shared)` für:
-    - `rast` (SpatRaster),
-    - `shape` (Maske im RADKLIM-KBS),
-    - `shape_25832` (Maske in EPSG:25832),
-    - `times`, `product`, `dt_min`,
-    - `result` (aggregierte Zeitreihe),
-    - `kostra` (KOSTRA-Datenframe) etc.
-- `R/mod_import.R`
-  - Modul **Datenimport** (NetCDF + Shape, Reprojektion, Preview).
-- `R/mod_process.R`
-  - Modul **Verarbeitung** (Flächenkennwert, Aggregation, Tabelle).
-- `R/mod_plot.R`
-  - Modul **Ergebnisse** (Zeitreihenplot, KOSTRA-Vergleich, Tabellen).
-- `R/utils.R`
-  - Hilfsfunktionen:
-    - RADKLIM-Einlesen,
-    - Dauerstufenaggregation,
-    - KOSTRA-API-Anbindung, …
-
-Verwendete Kernpakete:
-
-- `shiny`, `bslib`, `shinyWidgets`, `shinycssloaders`, `DT`
-- `terra`, `sf`, `tidyterra`
-- `data.table`, `readr`
-- `httr`, `jsonlite`
-- `ggplot2`, `tidyverse`-Core
+**Kernpakete:** `shiny`, `bslib`, `shinyWidgets`, `shinycssloaders`, `DT`, `plotly`; `terra`, `sf`, `tidyterra`, `leaflet`; `data.table`, `readr`; `httr`, `jsonlite`, `tidygeocoder`; `ggplot2`; `rmarkdown`, `knitr`, `flextable`; für PDF zusätzlich `tinytex` (LaTeX).
 
 ---
 
 ## 🚀 Lokaler Start
 
-### 1. Repository klonen
+```r
+# benötigte Pakete (einmalig)
+install.packages(c(
+  "shiny", "bslib", "shinyWidgets", "shinycssloaders", "DT", "plotly",
+  "terra", "sf", "tidyterra", "leaflet",
+  "data.table", "readr", "httr", "jsonlite", "tidygeocoder",
+  "ggplot2", "rmarkdown", "knitr", "flextable"
+))
+# für den PDF-Export:
+install.packages("tinytex"); tinytex::install_tinytex()
 
-```bash
-git clone https://github.com/<dein-account>/hydroStorm.git
-cd hydroStorm
+# App starten
+shiny::runApp()
+```
+
+Der KOSTRA-API-Schlüssel wird über die Umgebungsvariable `KOSTRA_KEY` bereitgestellt.
+
+### Deployment auf Posit Connect
+
+Vor dem Deploy `rsconnect::writeManifest()` ausführen (damit u. a. `plotly`, `rmarkdown`, `knitr`, `flextable` in der `manifest.json` landen) und sicherstellen, dass der Ordner `report/` mitdeployt wird. Für den PDF-Export muss auf der Zielumgebung LaTeX vorhanden sein.
+
+---
+
+## 📄 Lizenz & Kontakt
+
+HydroStorm steht unter der **GNU General Public License, Version 3 (GPL-3.0)** – Details in `LICENSE`. Bereitstellung zu Forschungs- und Planungszwecken; die Interpretation der Ergebnisse erfolgt in eigener Verantwortung. Für Entscheidungen in Planung, Genehmigung oder Gefahrenabwehr sind stets zusätzliche Datengrundlagen heranzuziehen.
+
+Kontakt: [Felix Simon](mailto:felix.simon@hs-bochum.de) · © 2026 Felix Simon, Hochschule Bochum.
+
+**Quelle SRI:** Schmitt, T. G.; Krüger, M.; Pfister, A.; Becker, M.; Mudersbach, C.; Fuchs, L.; Hoppe, H.; Lakes, I. (2018): Einheitliches Konzept zur Bewertung von Starkregenereignissen mittels Starkregenindex. KW Korrespondenz Wasserwirtschaft, Heft 2/2018.

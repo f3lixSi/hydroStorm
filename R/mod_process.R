@@ -21,7 +21,7 @@ processUI <- function(id) {
       ns("agg_fun"),
       "Flächenaggregation über Shape:",
       choices = c("Maximum" = "max", "Mittelwert" = "mean"),
-      selected = "max",
+      selected = "mean",
       inline = TRUE
     ),
     

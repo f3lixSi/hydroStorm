@@ -10,16 +10,19 @@ library(shinycssloaders)
 library(terra)
 library(tidyterra)
 library(ggplot2)
+library(plotly)
 library(data.table)
 library(readr)
 library(jsonlite)
 library(DT)
 library(tidygeocoder)
+library(rmarkdown)
 
 # Module laden
 source("R/mod_import.R")
 source("R/mod_process.R")
 source("R/mod_plot.R")
+source("R/mod_report.R")
 source("R/utils.R")
 
 # Upload-Limit
@@ -47,9 +50,10 @@ info_help_tab <- tabPanel(
     h3("Über HydroStorm"),
     p(
       "HydroStorm ist ein Werkzeug zur Auswertung radarbasierter Niederschlagsdaten (RADKLIM ",
-      "– Produkte YW und RW). Die App extrahiert Flächenkennwerte (Maximum oder Mittelwert) ",
-      "über einem frei wählbaren Untersuchungsgebiet und bildet daraus Dauerstufen-Zeitreihen ",
-      "mit anschließender Gegenüberstellung zu KOSTRA-Daten."
+      "– Produkte YW und RW). Die App extrahiert Flächenkennwerte (Mittelwert oder Maximum) ",
+      "über einem frei wählbaren Untersuchungsgebiet (Shapefile, Punkt oder Adresse), bildet daraus ",
+      "Dauerstufen-Zeitreihen, stellt sie KOSTRA gegenüber, ordnet das Ereignis nach dem ",
+      "Starkregenindex (SRI) ein und erzeugt auf Wunsch einen Bericht als Word oder PDF."
     ),
     
     tags$hr(),
@@ -58,27 +62,36 @@ info_help_tab <- tabPanel(
       tags$li(
         strong("Datenimport (Tab „📂 Datenimport“):"),
         tags$ul(
-          tags$li("RADKLIM-NetCDF-Datei (.nc) auswählen (z. B. YW_2017.002_YYYYMMDD.nc)."),
-          tags$li("Zeitraum festlegen – wird nach Upload automatisch auf den verfügbaren Zeitraum eingeschränkt."),
-          tags$li("Untersuchungsgebiet als Shapefile hochladen (alle zugehörigen Dateien auswählen: .shp, .dbf, .shx, .prj).")
+          tags$li("RADKLIM-NetCDF-Datei(en) (.nc) auswählen (z. B. YW_2017.002_YYYYMMDD.nc). Mehrere Tage können gemeinsam geladen werden."),
+          tags$li("Zeitraum festlegen – wird nach Upload automatisch auf den verfügbaren Zeitraum gesetzt."),
+          tags$li("Auswertungsgebiet wählen: Shapefile (.shp, .dbf, .shx, .prj gemeinsam), Punkt in die Karte klicken, oder Adresse eingeben und geokodieren."),
+          tags$li("Nach „Daten laden“ legt die interaktive OpenStreetMap-Karte die Niederschlagssumme halbtransparent über das Gebiet.")
         )
       ),
       tags$li(
         strong("Verarbeitung & Analyse (Tab „⚙️ Verarbeitung“):"),
         tags$ul(
-          tags$li("Dauerstufen (in Minuten) auswählen, die ausgewertet werden sollen."),
-          tags$li("Option wählen, ob über der Fläche das Flächenmaximum oder der Flächenmittelwert gebildet wird."),
-          tags$li("Auf „Analyse starten“ klicken – der Fortschrittsbalken zeigt den Status der Berechnung."),
-          tags$li("Die Ergebnis-Tabelle zeigt die Zeitreihe der Flächenkennwerte sowie die aggregierten Dauerstufen.")
+          tags$li("Dauerstufen (in Minuten) auswählen."),
+          tags$li("Flächenkennwert wählen: Flächenmittelwert (Standard) oder Flächenmaximum je Zeitschritt."),
+          tags$li("„Analyse starten“ – Ergebnis ist die Zeitreihe je Dauerstufe (rechtsbündige gleitende Summen).")
         )
       ),
       tags$li(
         strong("Ergebnisse (Tab „📊 Ergebnisse“):"),
         tags$ul(
-          tags$li("Zeitreihe der Originalwerte oder einer ausgewählten Dauerstufe plotten."),
-          tags$li("KOSTRA-Abgleich starten (über Kachelindex oder Koordinate aus der Maske)."),
-          tags$li("Dauerstufenvergleich HydroStorm vs. KOSTRA für frei wählbare Jährlichkeiten darstellen."),
-          tags$li("HydroStorm- und KOSTRA-Daten als CSV exportieren.")
+          tags$li("Interaktive Zeitreihe je Dauerstufe (Hover/Zoom); Export als PNG/PDF/SVG."),
+          tags$li("KOSTRA-Abgleich starten (über Kachelindex oder automatisch über Gebiets-/Punktkoordinate)."),
+          tags$li("Dauerstufenvergleich HydroStorm vs. KOSTRA – optional mit SRI-Einfärbung der Ereignis-Punkte (per Checkbox)."),
+          tags$li("Reiter „SRI-Einordnung“: maßgebender Starkregenindex als farbige Kachel und Tabelle je Dauerstufe."),
+          tags$li("HydroStorm- und KOSTRA-Daten als CSV, Plots als Bild exportieren.")
+        )
+      ),
+      tags$li(
+        strong("Bericht (Tab „📄 Bericht“):"),
+        tags$ul(
+          tags$li("Bericht als Word oder PDF erzeugen: Titelkopf/Metadaten, Zeitreihe, KOSTRA-Vergleich mit SRI sowie SRI- und KOSTRA-Tabellen."),
+          tags$li("Grundlage sind die im Reiter „Ergebnisse“ gewählten Einstellungen (Dauerstufe, Jährlichkeiten). Für die SRI-Einordnung muss der KOSTRA-Abgleich gestartet sein."),
+          tags$li("PDF benötigt eine LaTeX-Installation (tinytex); Word funktioniert ohne.")
         )
       )
     ),
@@ -101,8 +114,9 @@ info_help_tab <- tabPanel(
         "Die Maske (Shape) wird intern automatisch auf diese Projektion reprojiziert."
       ),
       tags$li(
-        "Die Auswertung erfolgt aktuell immer auf Basis des gewählten Gebiets (Polygon) – ",
-        "entweder als Flächenmaximum oder als Flächenmittelwert je Zeitschritt."
+        "Das Auswertungsgebiet kann als Shapefile, als Punkt in der Karte oder als Adresse ",
+        "vorgegeben werden; Punkt und Adresse werden intern zu einem 1-km-Puffer. Je Zeitschritt ",
+        "wird daraus der Flächenmittelwert oder das Flächenmaximum gebildet."
       )
     ),
     
@@ -128,6 +142,21 @@ info_help_tab <- tabPanel(
     ),
     
     tags$hr(),
+    h3("Starkregenindex (SRI)"),
+    tags$ul(
+      tags$li(
+        "Die Einordnung folgt dem einheitlichen Verfahren nach Schmitt et al. (2018): je Dauerstufe ",
+        "wird die beobachtete Niederschlagshöhe über KOSTRA einer Wiederkehrzeit zugeordnet und daraus ",
+        "der Index 1–12 abgeleitet (SRI 1–2 Starkregen, 3–4 intensiv, 5–7 außergewöhnlich, 8–12 extrem)."
+      ),
+      tags$li(
+        "Oberhalb der 100-jährlichen Höhe (SRI 8–12) erfolgt die Einordnung über den ",
+        "Extrapolationsfaktor hN/hN(100a). Der maßgebende SRI des Ereignisses ist das Maximum ",
+        "über alle ausgewerteten Dauerstufen."
+      )
+    ),
+
+    tags$hr(),
     h3("Kontakt"),
     p(
       "Bei Fragen, Anmerkungen oder Feedback wende dich bitte an ",
@@ -152,7 +181,7 @@ info_help_tab <- tabPanel(
       " im GitHub-Repository."
     ),
     p(
-      "© 2025 Felix Simon, Hochschule Bochum."
+      "© 2026 Felix Simon, Hochschule Bochum."
     )
   )
 )
@@ -183,7 +212,8 @@ ui <- tagList(
     tabPanel("📂 Datenimport",   importUI("imp")),
     tabPanel("⚙️ Verarbeitung",  processUI("proc")),
     tabPanel("📊 Ergebnisse",    plotUI("plt")),
-    info_help_tab 
+    tabPanel("📄 Bericht",       reportUI("rep")),
+    info_help_tab
   )
 )
 
@@ -201,6 +231,7 @@ server <- function(input, output, session) {
   callModule(importServer,  "imp",  shared = shared)
   callModule(processServer, "proc", shared = shared)
   callModule(plotServer,    "plt",  shared = shared)
+  callModule(reportServer,  "rep",  shared = shared)
   
   # About/Info-Button schaltet auf Info-Tab
   observeEvent(input$go_info, {

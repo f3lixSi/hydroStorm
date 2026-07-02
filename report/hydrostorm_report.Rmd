@@ -1,0 +1,156 @@
+---
+title: "HydroStorm – Auswertung Starkregenereignis"
+date: "`r format(Sys.time(), '%d.%m.%Y %H:%M')`"
+mainfont: Arial
+sansfont: Arial
+header-includes:
+  - \usepackage{lscape}
+  - \usepackage{fancyhdr}
+  - \pagestyle{fancy}
+  - \fancyhf{}
+  - \fancyhead[R]{\includegraphics[height=0.9cm]{logo_hydrostorm.png}}
+  - \fancyfoot[C]{\thepage}
+  - \renewcommand{\headrulewidth}{0.4pt}
+  - \setlength{\headheight}{30pt}
+  - \fancypagestyle{plain}{\fancyhf{}\fancyhead[R]{\includegraphics[height=0.9cm]{logo_hydrostorm.png}}\fancyfoot[C]{\thepage}\renewcommand{\headrulewidth}{0.4pt}}
+output:
+  word_document:
+    toc: false
+    reference_docx: reference.docx
+  pdf_document:
+    toc: false
+    latex_engine: xelatex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE, warning = FALSE, message = FALSE,
+  fig.width = 7, fig.height = 4, dpi = 200
+)
+library(ggplot2)
+library(data.table)
+
+# Für PDF Grafiken mit Unicode-fester Schrift rendern
+if (knitr::is_latex_output()) knitr::opts_chunk$set(dev = "cairo_pdf")
+
+# Saubere Tabellen: flextable für Word/HTML, kable+booktabs für PDF
+show_table <- function(df) {
+  if (knitr::is_latex_output()) {
+    knitr::kable(df, booktabs = TRUE, linesep = "")
+  } else if (requireNamespace("flextable", quietly = TRUE)) {
+    ft <- flextable::flextable(df)
+    ft <- flextable::theme_booktabs(ft)
+    ft <- flextable::autofit(ft)
+    flextable::fontsize(ft, size = 9, part = "all")
+  } else {
+    knitr::kable(df)
+  }
+}
+
+# SRI-Tabelle einmal berechnen (in weiteren Chunks wiederverwendet)
+sri_df <- tryCatch(
+  hydro_sri_table(rep_result, rep_kostra, rep_durations),
+  error = function(e) NULL
+)
+```
+
+## Übersicht
+
+```{r meta}
+meta <- data.frame(
+  Angabe = c("Ort", "Zeitraum", "RADKLIM-Produkt", "Auswertungsmodus",
+             "Flächenaggregation", "Zeitreihen-Dauerstufe"),
+  Wert   = c(
+    rep_location,
+    rep_period,
+    rep_product,
+    rep_area,
+    rep_agg,
+    paste0(rep_plot_dur, " min")
+  ),
+  stringsAsFactors = FALSE
+)
+show_table(meta)
+```
+
+## Maßgebende Einordnung (Starkregenindex)
+
+```{r sri_box, results='asis'}
+if (is.null(sri_df)) {
+  cat("_Keine SRI-Einordnung möglich – bitte KOSTRA-Abgleich durchführen._\n")
+} else {
+  valid <- sri_df[!is.na(sri_df$sri) & sri_df$sri > 0, , drop = FALSE]
+  if (nrow(valid) == 0) {
+    cat("_Kein Starkregen: alle ausgewerteten Dauerstufen liegen unter der 1-jährlichen Niederschlagshöhe._\n")
+  } else {
+    im <- which.max(valid$sri)
+    cat(sprintf("> **Maßgebender Starkregenindex: SRI %d** — %s  \n",
+                valid$sri[im], sri_category(valid$sri[im])))
+    cat(sprintf("> Maßgebende Dauerstufe: **%g min**  \n", valid$dauer_min[im]))
+    cat(sprintf("> Beobachtete Niederschlagshöhe: **%.1f mm**  \n", valid$hN_obs[im]))
+    cat(sprintf("> Erreichte Jährlichkeit: **%s**\n", valid$wiederkehr[im]))
+  }
+}
+```
+
+## Zeitreihe
+
+```{r ts_plot}
+p <- tryCatch(
+  hydro_ts_plot(rep_result, rep_plot_dur, rep_product, rep_location),
+  error = function(e) NULL
+)
+if (!is.null(p)) print(p)
+```
+
+## Dauerstufenvergleich HydroStorm vs. KOSTRA (mit SRI)
+
+```{r kostra_plot}
+p <- tryCatch(
+  hydro_kostra_plot(rep_result, rep_kostra, rep_durations,
+                    rep_kostra_T, rep_location, use_sri = TRUE),
+  error = function(e) NULL
+)
+if (!is.null(p)) print(p)
+```
+
+## SRI-Einordnung je Dauerstufe
+
+```{r sri_tab}
+if (!is.null(sri_df)) {
+  tt <- sri_df
+  names(tt) <- c("Dauer [min]", "hN beob. [mm]", "erreichte Jährlichkeit", "SRI", "Kategorie")
+  show_table(tt)
+}
+```
+
+```{=latex}
+\begin{landscape}
+```
+
+## KOSTRA-Niederschlagshöhen [mm]
+
+```{r kostra_tab}
+k <- tryCatch(data.table::as.data.table(rep_kostra), error = function(e) NULL)
+if (!is.null(k)) {
+  k <- k[typ == "HN"]
+  if (nrow(k) > 0) {
+    k[, value := round(value, 1)]
+    wide <- data.table::dcast(k, dauer_min ~ T_Jahre, value.var = "value")
+    data.table::setorder(wide, dauer_min)
+    on <- names(wide); nn <- on
+    nn[1] <- "Dauer [min]"
+    if (length(on) > 1) nn[-1] <- paste0("T=", on[-1], " a")
+    data.table::setnames(wide, on, nn)
+    show_table(as.data.frame(wide))
+  }
+}
+```
+
+```{=latex}
+\end{landscape}
+```
+
+---
+
+*Erstellt mit HydroStorm. SRI-Methodik nach Schmitt et al. (2018). Die KOSTRA-Gegenüberstellung dient der orientierenden Plausibilisierung; für Planung und Gefahrenabwehr sind weitere Datengrundlagen heranzuziehen.*

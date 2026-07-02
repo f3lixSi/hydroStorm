@@ -56,20 +56,26 @@ importUI <- function(id) {
       
       actionButton(ns("load"), "Daten laden", icon = icon("play"), class = "btn-primary"),
       tags$hr(),
-      verbatimTextOutput(ns("info")),
-      plotOutput(ns("preview"), height = 280)
+      verbatimTextOutput(ns("info"))
     ),
     column(
       width = 6,
       h3("Räumliche Vorschau"),
-      leaflet::leafletOutput(ns("map_preview"), height = 500)
+      helpText("Nach dem Laden wird die Niederschlagssumme halbtransparent über die OpenStreetMap-Karte gelegt."),
+      leaflet::leafletOutput(ns("map_preview"), height = 560)
     )
   )
 }
 
 importServer <- function(input, output, session, shared) {
   ns <- session$ns
-  
+
+  # Statusmeldung zentral halten und EINMALIG rendern.
+  # (Outputs nicht in jedem Handler neu zuweisen – das blieb in neueren
+  #  Shiny-Versionen im "recalculating"-Zustand hängen.)
+  info_msg <- reactiveVal("")
+  output$info <- renderText(info_msg())
+
   # Basiskarte beim Start
   output$map_preview <- leaflet::renderLeaflet({
     leaflet::leaflet() |>
@@ -80,12 +86,15 @@ importServer <- function(input, output, session, shared) {
   # Zeitraum nach Upload der RADKLIM-Datei(en) bestimmen
   observeEvent(input$raster, {
     req(input$raster)
-    output$info <- renderText("📄 RADKLIM-Datei(en) werden analysiert …")
+    info_msg("📄 RADKLIM-Datei(en) werden analysiert …")
     
     first_path <- input$raster$datapath[1]
-    r_tmp <- tryCatch(read_radklim_nc(first_path), error = function(e) e)
+    r_tmp <- tryCatch(
+      read_radklim_nc(first_path, fname = input$raster$name[1]),
+      error = function(e) e
+    )
     if (inherits(r_tmp, "error")) {
-      output$info <- renderText(paste("❌ Fehler beim Einlesen:", r_tmp$message))
+      info_msg(paste("❌ Fehler beim Einlesen:", r_tmp$message))
       return(NULL)
     }
     
@@ -102,14 +111,14 @@ importServer <- function(input, output, session, shared) {
         max   = maxD
       )
       
-      output$info <- renderText(sprintf(
+      info_msg(sprintf(
         "✅ RADKLIM erkannt: %s …\nZeitraum (erste Datei): %s – %s (%d Layer)",
         paste(basename(input$raster$name), collapse = ", "),
         format(minD), format(maxD),
         terra::nlyr(r_tmp)
       ))
     } else {
-      output$info <- renderText("⚠️ Konnte keine Zeitinformation erkennen.")
+      info_msg("⚠️ Konnte keine Zeitinformation erkennen.")
     }
   })
   
@@ -187,29 +196,32 @@ importServer <- function(input, output, session, shared) {
   observeEvent(input$load, {
     req(input$raster)
     
+    tryCatch(
     withProgress(message = "📡 Importiere Daten …", value = 0, {
       incProgress(0.1, detail = "Lese RADKLIM-Datei(en) …")
       
       rad_paths <- input$raster$datapath
-      r_list <- lapply(rad_paths, function(p) {
-        tryCatch(read_radklim_nc(p), error = function(e) e)
+      rad_names <- input$raster$name
+      r_list <- lapply(seq_along(rad_paths), function(i) {
+        tryCatch(read_radklim_nc(rad_paths[i], fname = rad_names[i]), error = function(e) e)
       })
       if (any(vapply(r_list, inherits, logical(1), "error"))) {
         err <- r_list[[which(vapply(r_list, inherits, logical(1), "error"))[1]]]
-        output$info <- renderText(paste("❌ Fehler RADKLIM:", err$message))
+        info_msg(paste("❌ Fehler RADKLIM:", err$message))
         return(NULL)
       }
       
+      # Attribute aus den Einzel-Reads sichern, BEVOR c() sie verwirft
+      times   <- do.call(c, lapply(r_list, attr, which = "hydrostorm_time"))
+      product <- attr(r_list[[1]], "hydrostorm_product")
+      dt_min  <- attr(r_list[[1]], "hydrostorm_dt_min")
       r <- do.call(c, r_list)
-      times   <- attr(r, "hydrostorm_time")
-      product <- attr(r, "hydrostorm_product")
-      dt_min  <- attr(r, "hydrostorm_dt_min")
-      
+
       t_start <- as.POSIXct(input$daterange[1], tz = "UTC")
       t_end   <- as.POSIXct(input$daterange[2], tz = "UTC") + 86399
       sel <- which(times >= t_start & times <= t_end)
       if (length(sel) == 0) {
-        output$info <- renderText("❌ Kein Layer im gewählten Zeitraum gefunden.")
+        info_msg("❌ Kein Layer im gewählten Zeitraum gefunden.")
         return(NULL)
       }
       r     <- r[[sel]]
@@ -222,12 +234,18 @@ importServer <- function(input, output, session, shared) {
       
       # 1) Shape-Modus
       if (input$area_mode == "shape") {
-        req(input$mask_shape)
-        
+        if (is.null(input$mask_shape)) {
+          info_msg(
+            "❌ Kein Shapefile geladen. Bitte im Modus 'Shape' die vier Dateien (.shp, .dbf, .shx, .prj) gemeinsam hochladen."
+          )
+          showNotification("Bitte zuerst ein Shapefile hochladen (.shp/.dbf/.shx/.prj).", type = "warning")
+          return(NULL)
+        }
+
         shp_files <- input$mask_shape
         shp_idx   <- grep("\\.shp$", shp_files$name, ignore.case = TRUE)
         if (length(shp_idx) != 1) {
-          output$info <- renderText("❌ Es muss genau eine .shp-Datei ausgewählt sein.")
+          info_msg("❌ Es muss genau eine .shp-Datei ausgewählt sein.")
           return(NULL)
         }
         
@@ -252,13 +270,13 @@ importServer <- function(input, output, session, shared) {
         
         shp_path <- file.path(tmpdir, "shape.shp")
         if (!file.exists(shp_path)) {
-          output$info <- renderText("❌ Konnte shape.shp nicht erzeugen – fehlen .shp/.dbf/.shx/.prj?")
+          info_msg("❌ Konnte shape.shp nicht erzeugen – fehlen .shp/.dbf/.shx/.prj?")
           return(NULL)
         }
         
         vect_orig <- tryCatch(terra::vect(shp_path), error = function(e) e)
         if (inherits(vect_orig, "error")) {
-          output$info <- renderText(paste("❌ Fehler beim Laden des Shapes:", vect_orig$message))
+          info_msg(paste("❌ Fehler beim Laden des Shapes:", vect_orig$message))
           return(NULL)
         }
         
@@ -275,21 +293,30 @@ importServer <- function(input, output, session, shared) {
       
       # 2) Punkt- oder Adress-Modus: aus Punkt ein kleines Polygon erzeugen
       if (input$area_mode %in% c("point", "address")) {
-        req(shared$pt_ll)
-        
+        if (is.null(shared$pt_ll)) {
+          msg <- if (input$area_mode == "point") {
+            "❌ Kein Punkt gesetzt. Bitte den Modus 'Punkt in Karte setzen' wählen und in die Karte klicken (es muss ein Marker erscheinen)."
+          } else {
+            "❌ Keine Adresse gefunden. Bitte eine Adresse eingeben und 'Adresse suchen' klicken."
+          }
+          info_msg(msg)
+          showNotification(msg, type = "warning")
+          return(NULL)
+        }
+
         pt_r <- tryCatch(
           sf::st_transform(shared$pt_ll, terra::crs(r)),
           error = function(e) NULL
         )
         if (is.null(pt_r)) {
-          output$info <- renderText("❌ Konnte Punkt nicht in Raster-Koordinatensystem transformieren.")
+          info_msg("❌ Konnte Punkt nicht in Raster-Koordinatensystem transformieren.")
           return(NULL)
         }
         
         buf_r <- sf::st_buffer(pt_r, dist = 1000)  # 1 km Radius
         vect_radklim <- tryCatch(terra::vect(buf_r), error = function(e) NULL)
         if (is.null(vect_radklim)) {
-          output$info <- renderText("❌ Konnte aus Punkt kein Auswerte-Polygon erzeugen.")
+          info_msg("❌ Konnte aus Punkt kein Auswerte-Polygon erzeugen.")
           return(NULL)
         }
         
@@ -300,35 +327,72 @@ importServer <- function(input, output, session, shared) {
         )
       }
       
-      incProgress(0.6, detail = "Leaflet-Vorschau aktualisieren …")
-      
+      incProgress(0.6, detail = "Karte aktualisieren …")
+
+      # Niederschlagssumme über den Zeitraum, auf das Gebiet (+5 km) zugeschnitten
+      # und nach EPSG:4326 projiziert – für das halbtransparente Karten-Overlay.
+      r_sum_ll <- tryCatch({
+        r_crop <- terra::crop(r, terra::ext(vect_radklim) + 5000)
+        r_sum  <- sum(r_crop, na.rm = TRUE)
+        terra::project(r_sum, "EPSG:4326")
+      }, error = function(e) NULL)
+
       proxy <- leaflet::leafletProxy(ns("map_preview"), session = session) |>
+        leaflet::clearImages() |>
+        leaflet::clearControls() |>
         leaflet::clearShapes() |>
         leaflet::clearMarkers()
-      
+
+      # Raster halbtransparent über OpenStreetMap legen
+      if (!is.null(r_sum_ll)) {
+        rng <- range(terra::values(r_sum_ll, mat = FALSE), na.rm = TRUE)
+        if (all(is.finite(rng)) && diff(rng) > 0) {
+          pal <- leaflet::colorNumeric("Blues", domain = rng, na.color = "transparent")
+          proxy <- proxy |>
+            leaflet::addRasterImage(r_sum_ll, colors = pal, opacity = 0.7, project = TRUE) |>
+            leaflet::addLegend(
+              pal = pal, values = rng,
+              title = "Niederschlag<br>Summe [mm]", position = "bottomright"
+            )
+        }
+      }
+
+      # Auswertungsgebiet bzw. Punkt darüber zeichnen + auf das Gebiet zoomen
+      bb <- NULL
       if (input$area_mode == "shape" && !is.null(vect_25832)) {
-        shp_ll <- tryCatch(
-          terra::project(vect_25832, "EPSG:4326"),
-          error = function(e) NULL
-        )
+        shp_ll <- tryCatch(terra::project(vect_25832, "EPSG:4326"), error = function(e) NULL)
         if (!is.null(shp_ll)) {
           shp_sf <- sf::st_as_sf(shp_ll)
-          proxy |>
-            leaflet::addPolygons(
-              data  = shp_sf,
-              weight = 2,
-              color  = "#004E7C",
-              fill   = FALSE
-            )
+          proxy  <- proxy |>
+            leaflet::addPolygons(data = shp_sf, weight = 2, color = "#004E7C", fill = FALSE)
+          bb <- as.numeric(sf::st_bbox(shp_sf))
         }
       } else if (input$area_mode %in% c("point", "address") && !is.null(shared$pt_ll)) {
         coords <- sf::st_coordinates(shared$pt_ll)
-        proxy |>
-          leaflet::addMarkers(lng = coords[1], lat = coords[2])
+        proxy  <- proxy |>
+          leaflet::addMarkers(lng = coords[1, 1], lat = coords[1, 2])
       }
-      
+
+      if (!is.null(bb) && all(is.finite(bb))) {
+        proxy |> leaflet::fitBounds(bb[1], bb[2], bb[3], bb[4])
+      } else if (!is.null(shared$pt_ll)) {
+        coords <- sf::st_coordinates(shared$pt_ll)
+        proxy |> leaflet::setView(lng = coords[1, 1], lat = coords[1, 2], zoom = 12)
+      }
+
       incProgress(0.8, detail = "Metadaten speichern …")
-      
+
+      # Ortsbezeichnung für die Plots bestimmen (Adresse, sonst Reverse-Geocoding)
+      shared$location_label <- tryCatch(
+        determine_location_label(
+          area_mode  = input$area_mode,
+          address    = input$address,
+          pt_ll      = shared$pt_ll,
+          vect_25832 = vect_25832
+        ),
+        error = function(e) NA_character_
+      )
+
       shared$rast         <- r
       shared$shape        <- vect_radklim
       shared$shape_25832  <- vect_25832
@@ -336,8 +400,9 @@ importServer <- function(input, output, session, shared) {
       shared$product      <- product
       shared$dt_min       <- dt_min
       shared$radklim_path <- rad_paths[1]
+      shared$area_mode    <- input$area_mode
       
-      output$info <- renderText(sprintf(
+      info_msg(sprintf(
         "✅ RADKLIM geladen: %d Layer (%s – %s)\nAuswertungsmodus: %s",
         terra::nlyr(r),
         format(min(times)), format(max(times)),
@@ -350,26 +415,12 @@ importServer <- function(input, output, session, shared) {
       ))
       
       incProgress(1, detail = "Fertig!")
+    }),
+    error = function(e) {
+      msg <- paste("❌ Fehler beim Laden:", conditionMessage(e))
+      info_msg(msg)
+      showNotification(msg, type = "error", duration = 10)
+      message(msg)
     })
-  })
-  
-  # Raster-Vorschau
-  output$preview <- renderPlot({
-    req(shared$rast)
-    r_plot <- shared$rast[[1]]
-    p <- tidyterra::autoplot(r_plot) +
-      theme_minimal() +
-      ggtitle("RADKLIM (1. Layer, Original-KBS)") +
-      theme(plot.title = element_text(face = "bold"))
-    if (!is.null(shared$shape)) {
-      p <- p +
-        tidyterra::geom_spatvector(
-          data = shared$shape,
-          fill = NA,
-          color = "red",
-          linewidth = 1
-        )
-    }
-    p
   })
 }
