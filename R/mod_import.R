@@ -83,26 +83,33 @@ importServer <- function(input, output, session, shared) {
       leaflet::setView(lng = 10, lat = 51, zoom = 5)
   })
   
-  # Zeitraum nach Upload der RADKLIM-Datei(en) bestimmen
+  # Zeitraum nach Upload der RADKLIM-Datei(en) bestimmen — über ALLE Dateien,
+  # damit auch Monats-/Jahreswechsel (mehrere Dateien) den vollen Zeitraum ergeben.
   observeEvent(input$raster, {
     req(input$raster)
     info_msg("📄 RADKLIM-Datei(en) werden analysiert …")
-    
-    first_path <- input$raster$datapath[1]
-    r_tmp <- tryCatch(
-      read_radklim_nc(first_path, fname = input$raster$name[1]),
-      error = function(e) e
-    )
-    if (inherits(r_tmp, "error")) {
-      info_msg(paste("❌ Fehler beim Einlesen:", r_tmp$message))
+
+    n_files    <- nrow(input$raster)
+    times_list <- lapply(seq_len(n_files), function(i) {
+      tryCatch(
+        radklim_time_axis(input$raster$datapath[i], fname = input$raster$name[i]),
+        error = function(e) e
+      )
+    })
+
+    errs <- vapply(times_list, inherits, logical(1), "error")
+    if (any(errs)) {
+      info_msg(paste("❌ Fehler beim Einlesen:", times_list[[which(errs)[1]]]$message))
       return(NULL)
     }
-    
-    times <- attr(r_tmp, "hydrostorm_time")
-    if (!is.null(times) && length(times) > 1) {
-      minD <- as.Date(min(times, na.rm = TRUE))
-      maxD <- as.Date(max(times, na.rm = TRUE))
-      
+
+    times <- do.call(c, times_list)
+    times <- times[!is.na(times)]
+
+    if (length(times) > 0) {
+      minD <- as.Date(min(times))
+      maxD <- as.Date(max(times))
+
       updateDateRangeInput(
         session, "daterange",
         start = minD,
@@ -110,12 +117,13 @@ importServer <- function(input, output, session, shared) {
         min   = minD,
         max   = maxD
       )
-      
+
       info_msg(sprintf(
-        "✅ RADKLIM erkannt: %s …\nZeitraum (erste Datei): %s – %s (%d Layer)",
+        "✅ RADKLIM erkannt: %d Datei(en): %s\nGesamtzeitraum: %s – %s (%d Layer)",
+        n_files,
         paste(basename(input$raster$name), collapse = ", "),
         format(minD), format(maxD),
-        terra::nlyr(r_tmp)
+        length(times)
       ))
     } else {
       info_msg("⚠️ Konnte keine Zeitinformation erkennen.")
@@ -212,10 +220,21 @@ importServer <- function(input, output, session, shared) {
       }
       
       # Attribute aus den Einzel-Reads sichern, BEVOR c() sie verwirft
-      times   <- do.call(c, lapply(r_list, attr, which = "hydrostorm_time"))
-      product <- attr(r_list[[1]], "hydrostorm_product")
+      times    <- do.call(c, lapply(r_list, attr, which = "hydrostorm_time"))
+      products <- vapply(r_list, function(x) attr(x, "hydrostorm_product"), character(1))
+      if (length(unique(products)) > 1) {
+        info_msg("❌ Bitte nicht YW- und RW-Dateien mischen.")
+        return(NULL)
+      }
+      product <- products[1]
       dt_min  <- attr(r_list[[1]], "hydrostorm_dt_min")
       r <- do.call(c, r_list)
+
+      # Layer chronologisch sortieren — die Upload-Reihenfolge der Dateien ist
+      # nicht garantiert (z. B. Monats-/Jahreswechsel: Januar vor Dezember gewählt)
+      ord   <- order(times)
+      r     <- r[[ord]]
+      times <- times[ord]
 
       t_start <- as.POSIXct(input$daterange[1], tz = "UTC")
       t_end   <- as.POSIXct(input$daterange[2], tz = "UTC") + 86399

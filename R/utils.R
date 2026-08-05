@@ -7,7 +7,43 @@ library(httr)
 library(jsonlite)
 library(data.table)
 
-# ---- RADKLIM: netCDF einlesen ----
+# ---- RADKLIM: Zeitachse bestimmen (ohne Rasterwerte einzulesen) ----
+# Schnelle Analyse nach dem Upload (Datumsbereich über ALLE Dateien) und
+# Baustein für read_radklim_nc(). Fallback über den Dateinamen unterstützt
+# Tagesdateien (…YYYYMMDD.nc) und Monatsdateien (…YYYYMM.nc).
+radklim_time_axis <- function(path, fname = NULL, r = NULL) {
+  ref_name <- if (!is.null(fname)) basename(fname) else basename(path)
+  if (is.null(r)) r <- terra::rast(path)
+
+  tvals <- tryCatch(terra::time(r), error = function(e) NULL)
+  if (!is.null(tvals) && !all(is.na(tvals))) {
+    return(as.POSIXct(tvals, tz = "UTC"))
+  }
+
+  step_s <- if (grepl("YW", ref_name, ignore.case = TRUE)) 5 * 60 else 60 * 60
+  dstr   <- gsub("\\D", "", ref_name)
+
+  t0 <- NULL
+  if (nchar(dstr) >= 8) {
+    t0 <- as.POSIXct(substr(dstr, nchar(dstr) - 7, nchar(dstr)),
+                     format = "%Y%m%d", tz = "UTC")
+    # Plausibilität: Monatsdateien (…YYYYMM) können im 8-Zeichen-Fenster
+    # scheinbar gültige, aber absurde Jahre ergeben -> verwerfen
+    if (!is.na(t0) && as.integer(format(t0, "%Y")) < 1900) t0 <- NA
+  }
+  if ((is.null(t0) || is.na(t0)) && nchar(dstr) >= 6) {
+    # Monatsdatei: YYYYMM -> Monatsanfang
+    t0 <- as.POSIXct(paste0(substr(dstr, nchar(dstr) - 5, nchar(dstr)), "01"),
+                     format = "%Y%m%d", tz = "UTC")
+  }
+
+  if (!is.null(t0) && !is.na(t0)) {
+    t0 + (seq_len(terra::nlyr(r)) - 1L) * step_s
+  } else {
+    rep(as.POSIXct(NA), terra::nlyr(r))
+  }
+}
+
 # ---- RADKLIM: netCDF einlesen ----
 read_radklim_nc <- function(path, t_start = NULL, t_end = NULL, fname = NULL) {
   # WICHTIG: Dateiname für Produkt-Erkennung
@@ -20,21 +56,9 @@ read_radklim_nc <- function(path, t_start = NULL, t_end = NULL, fname = NULL) {
   terra::crs(r) <- "+proj=stere +lat_0=90.0 +lon_0=10.0 +lat_ts=60.0 +a=6370040 +b=6370040 +units=m"
   terra::ext(r) <- c(-443462, 456538, -4758645, -3658645)
   
-  # Zeitachse
-  tvals <- tryCatch(terra::time(r), error = function(e) NULL)
-  if (is.null(tvals) || all(is.na(tvals))) {
-    dstr <- gsub("\\D", "", ref_name)
-    if (nchar(dstr) >= 8) {
-      day0 <- as.POSIXct(
-        substr(dstr, nchar(dstr) - 7, nchar(dstr)),
-        format = "%Y%m%d", tz = "UTC"
-      )
-      step_s <- if (grepl("YW", ref_name, ignore.case = TRUE)) 5 * 60 else 60 * 60
-      tvals  <- day0 + (seq_len(terra::nlyr(r)) - 1L) * step_s
-    } else {
-      tvals <- seq_len(terra::nlyr(r))
-    }
-  }
+  # Zeitachse (NetCDF-Zeit, sonst Fallback über Dateinamen – Tages-/Monatsdatei)
+  tvals <- radklim_time_axis(path, fname = ref_name, r = r)
+  if (all(is.na(tvals))) tvals <- seq_len(terra::nlyr(r))
   
   # Metadaten (für _FillValue etc.)
   md <- tryCatch(terra::describe(r[[1]]), error = function(e) NULL)
