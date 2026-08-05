@@ -78,10 +78,23 @@ read_radklim_nc <- function(path, t_start = NULL, t_end = NULL, fname = NULL) {
   
   fv <- safe_get(md, "_FillValue")
   mv <- safe_get(md, "missing_value")
-  
-  # Nodata ersetzen
-  if (!is.na(fv) && is.finite(fv)) r[r == fv] <- NA
-  if (!is.na(mv) && is.finite(mv)) r[r == mv] <- NA
+
+  # Nodata über Metadaten-Flag statt Werte-Ersetzung:
+  # r[r == fv] <- NA würde das KOMPLETTE Raster (alle Layer, ganz Deutschland)
+  # im Speicher/Temp materialisieren – auf Servern mit wenig RAM (z. B. Posit
+  # Connect Cloud) stürzt der R-Prozess dabei ab ("disconnected from server").
+  # NAflag() setzt nur ein Nodata-Flag; GDAL wendet _FillValue i. d. R.
+  # ohnehin automatisch an.
+  na_val <- if (!is.na(fv) && is.finite(fv)) {
+    fv
+  } else if (!is.na(mv) && is.finite(mv)) {
+    mv
+  } else {
+    NA_real_
+  }
+  if (!is.na(na_val)) {
+    tryCatch(terra::NAflag(r) <- na_val, error = function(e) NULL)
+  }
   
   # ref_name ist ein Vektor, wenn mehrere Dateien gewählt wurden
   is_yw <- grepl("YW", ref_name, ignore.case = TRUE)

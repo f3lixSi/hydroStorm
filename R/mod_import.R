@@ -348,13 +348,26 @@ importServer <- function(input, output, session, shared) {
       
       incProgress(0.6, detail = "Karte aktualisieren …")
 
-      # Niederschlagssumme über den Zeitraum, auf das Gebiet (+5 km) zugeschnitten
-      # und nach EPSG:4326 projiziert – für das halbtransparente Karten-Overlay.
-      r_sum_ll <- tryCatch({
-        r_crop <- terra::crop(r, terra::ext(vect_radklim) + 5000)
-        r_sum  <- sum(r_crop, na.rm = TRUE)
-        terra::project(r_sum, "EPSG:4326")
-      }, error = function(e) NULL)
+      # Raster EINMAL auf das Gebiet (+5 km) zuschneiden und für alles Weitere
+      # verwenden (Karten-Overlay UND Verarbeitung). Das volle Deutschland-
+      # Raster über viele Tage/Monate sprengt auf Servern mit wenig RAM
+      # (z. B. Posit Connect Cloud) den Speicher – der Zuschnitt reduziert die
+      # Datenmenge um Größenordnungen.
+      r_crop <- tryCatch(
+        terra::crop(r, terra::ext(vect_radklim) + 5000),
+        error = function(e) NULL
+      )
+
+      # Niederschlagssumme über den Zeitraum, nach EPSG:4326 projiziert –
+      # für das halbtransparente Karten-Overlay.
+      r_sum_ll <- if (!is.null(r_crop)) {
+        tryCatch(
+          terra::project(sum(r_crop, na.rm = TRUE), "EPSG:4326"),
+          error = function(e) NULL
+        )
+      } else {
+        NULL
+      }
 
       proxy <- leaflet::leafletProxy(ns("map_preview"), session = session) |>
         leaflet::clearImages() |>
@@ -412,7 +425,8 @@ importServer <- function(input, output, session, shared) {
         error = function(e) NA_character_
       )
 
-      shared$rast         <- r
+      # Zugeschnittenes Raster speichern (Fallback: Vollraster, falls Crop scheiterte)
+      shared$rast         <- if (!is.null(r_crop)) r_crop else r
       shared$shape        <- vect_radklim
       shared$shape_25832  <- vect_25832
       shared$times        <- times
